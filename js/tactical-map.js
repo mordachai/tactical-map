@@ -37,27 +37,28 @@ function addTacticalMapToSceneConfig() {
         `)}
         <p class="notes">An optional image to be used during tactical combat or similar scenarios.</p>
 
-        ${createFormGroup("Tactical Map Grid Type", `
-          <select name="tacticalMapGridType">
-            ${[ 
-              { value: 0, text: "Gridless" },
-              { value: 1, text: "Square" },
-              { value: 2, text: "Hexagonal Rows - Odd" },
-              { value: 3, text: "Hexagonal Rows - Even" },
-              { value: 4, text: "Hexagonal Columns - Odd" },
-              { value: 5, text: "Hexagonal Columns - Even" }
-            ].map(option => `<option value="${option.value}" ${app.object.getFlag("tactical-map", "gridType") === option.value ? "selected" : ""}>${option.text}</option>`).join('')}
-          </select>
-        `)}
-
-        ${createFormGroup("Tactical Map Grid Size", `
-          <input type="number" name="tacticalMapGridSize" value="${app.object.getFlag("tactical-map", "gridSize") || 100}">
-        `)}
+        <div class="form-group">
+          <label>Tactical Map Grid / Size</label>
+          <div class="form-fields">
+            <select name="tacticalMapGridType" style="width: 70%;">
+              ${[
+                { value: 0, text: "Gridless" },
+                { value: 1, text: "Square" },
+                { value: 2, text: "Hexagonal Rows - Odd" },
+                { value: 3, text: "Hexagonal Rows - Even" },
+                { value: 4, text: "Hexagonal Columns - Odd" },
+                { value: 5, text: "Hexagonal Columns - Even" }
+              ].map(option => `<option value="${option.value}" ${app.object.getFlag("tactical-map", "gridType") === option.value ? "selected" : ""}>${option.text}</option>`).join('')}
+            </select> / 
+            <input type="number" name="tacticalMapGridSize" value="${app.object.getFlag("tactical-map", "gridSize") || 100}" style="width: 25%;">
+          </div>
+        </div>
 
         ${createFormGroup("Add Tokens to Encounter", `
           <input type="checkbox" name="addTokensToEncounter" ${app.object.getFlag("tactical-map", "addTokensToEncounter") ? "checked" : ""}>
         `)}
       `;
+
 
       $(tacticalMapHtml).insertAfter(fgImgGroup);
 
