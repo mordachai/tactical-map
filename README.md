@@ -12,14 +12,22 @@
 
 To install this module, follow these steps:
 
-1. In Foundry VTT, go to the **Add-on Modules** tab in the **Configuration and Setup** menu.
+1. In Foundry VTT, go to the **Add-on Modules** tab
 2. Click **Install Module**.
 3. Paste the following manifest URL into the **Manifest URL** field:
 
-4. Click **Install**.
-5. Enable the module in your **World Configuration** under **Manage Modules**.
 
-## Usage
+4. Click **Install**.
+5. Enable the module in your **Game Settings** under **Manage Modules**.
+
+## Usage and Settings
+
+The following settings are available for configuration in the Scene Configuration menu:
+
+- **Tactical Map Image**: The image path for the Tactical Map
+- **Tactical Map Grid Type**: The type of grid to be used on the Tactical Map (Gridless, Square, 2x Hexagonal)
+- **Tactical Map Grid Size**: The size of the grid on the Tactical Map
+- **Add Tokens to Encounter**: Automatically adds all scene tokens to a combat encounter when the Tactical Map is activated
 
 ### Adding a Tactical Map
 
@@ -44,15 +52,6 @@ To install this module, follow these steps:
 ![image](https://github.com/user-attachments/assets/c7811391-1fa8-486f-90bf-c9eaca180eda)
    
 3. Click the button again to return to the original scene settings, restoring the previous zoom and position
-
-## Settings
-
-The following settings are available for configuration in the Scene Configuration menu:
-
-- **Tactical Map Image**: The image path for the Tactical Map
-- **Tactical Map Grid Type**: The type of grid to be used on the Tactical Map (Gridless, Square, 2x Hexagonal)
-- **Tactical Map Grid Size**: The size of the grid on the Tactical Map
-- **Add Tokens to Encounter**: Automatically adds all scene tokens to a combat encounter when the Tactical Map is activated
 
 ## Contributing
 
