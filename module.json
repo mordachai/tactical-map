@@ -2,7 +2,7 @@
     "id": "tactical-map",
     "title": "Tactical Map",
     "version": "1.0.0",
-    "description": "Adds an optional Tactical Map Image for a Scene, toggled from the Tokens Control tools. (left tool bar)",
+    "description": "Adds an optional Tactical Map Image for a Scene, toggled from the Tokens Control tools. (left toolbar)",
     "compatibility": {
         "minimum": "12",
         "verified": "12"
@@ -16,8 +16,9 @@
     "esmodules": [
       "js/tactical-map.js"
     ],
-    "manifest": "",
-    "download": "",
-    "license": "LICENSE"
+    "url": "https://github.com/mordachai/tactical-map",
+    "manifest": "placeholder",
+    "download": "placeholder",
+    "license": "https://github.com/mordachai/tactical-map?tab=GPL-3.0-1-ov-file"
   }
   
