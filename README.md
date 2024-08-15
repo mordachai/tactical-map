@@ -14,13 +14,17 @@ It's a quality of life module, especially if you are running a Theather of the M
 
 To install this module, follow these steps:
 
+
+
 1. In Foundry VTT, go to the **Add-on Modules** tab
-2. Click **Install Module**.
-3. Paste the following manifest URL into the **Manifest URL** field:
+2. Click **Install Module**
+3. Paste the following manifest URL into the bottom **Manifest URL** field:
+https://raw.githubusercontent.com/mordachai/tactical-map/main/module.json
+or
+search in the top bar for "tactical map"
 
-
-4. Click **Install**.
-5. Enable the module in your **Game Settings** under **Manage Modules**.
+5. Click **Install**
+6. Enable the module in your **Game Settings** under **Manage Modules**
 
 ## Usage and Settings
 
@@ -49,7 +53,7 @@ The following settings are available for configuration in the Scene Configuratio
 
 ![image](https://github.com/user-attachments/assets/d6c65a6a-3c91-4c15-9eba-73f35976235e)
 
-2. Click this button to switch to the Tactical Map. The scene will automatically zoom and center to display the entire Tactical Map
+2. Click this button to switch to the Tactical Map. The scene will automatically zoom and center to display the entire Tactical Map. This will be only done on the **active scene**
 
 ![image](https://github.com/user-attachments/assets/c7811391-1fa8-486f-90bf-c9eaca180eda)
    
