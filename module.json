@@ -17,7 +17,7 @@
       "js/tactical-map.js"
     ],
     "url": "https://github.com/mordachai/tactical-map",
-    "manifest": "placeholder",
+    "manifest": "https://raw.githubusercontent.com/mordachai/tactical-map/main/module.json",
     "download": "placeholder",
     "license": "https://github.com/mordachai/tactical-map?tab=GPL-3.0-1-ov-file"
   }
