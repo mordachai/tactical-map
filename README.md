@@ -60,6 +60,7 @@ The following settings are available for configuration in the Scene Configuratio
 Contributions are welcome! Please feel free to submit a Pull Request or open an issue on GitHub.
 
 ## License
+GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 
 
 
