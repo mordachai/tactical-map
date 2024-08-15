@@ -1,0 +1,23 @@
+{
+    "id": "tactical-map",
+    "title": "Tactical Map",
+    "version": "1.0.0",
+    "description": "Adds an optional Tactical Map Image for a Scene, toggled from the Tokens Control tools. (left tool bar)",
+    "compatibility": {
+        "minimum": "12",
+        "verified": "12"
+    },
+    "authors": [
+        {
+          "name": "Gus",
+          "flags": {}
+        }
+      ],
+    "esmodules": [
+      "js/tactical-map.js"
+    ],
+    "manifest": "",
+    "download": "",
+    "license": "LICENSE"
+  }
+  
