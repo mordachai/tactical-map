@@ -1,7 +1,7 @@
 {
     "id": "tactical-map",
     "title": "Tactical Map",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Adds an optional Tactical Map Image for a Scene, toggled from the Tokens Control tools. (left toolbar)",
     "compatibility": {
         "minimum": "12",
