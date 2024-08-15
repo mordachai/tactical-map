@@ -1,6 +1,8 @@
 # Tactical Map Switcher
 
-**Tactical Map** is a Foundry VTT module that allows GMs to toggle between a normal scene and a tactical map. It provides a seamless transition between the two, including storing and restoring the scene's position and zoom levels.
+**Tactical Map** is a Foundry VTT module that allows GMs to toggle between a normal scene and a tactical map. It provides a seamless transition between the two.
+
+It's a quality of life module, especially if you are running a Theather of the Mind game, but want to solve combats more tactically.
 
 ## Features
 
