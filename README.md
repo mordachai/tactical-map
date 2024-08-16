@@ -42,7 +42,7 @@ The following settings are available for configuration in the Scene Configuratio
 
 ![image](https://github.com/user-attachments/assets/eedfeac4-d359-4a43-bcbd-8af3cbe85395)
 
-2. Scroll to the bottom and locate the **Tactical Map** settings
+2. In the **Basics** tab locate the **Tactical Map** settings
 3. Provide the path to your Tactical Map image in the **Tactical Map Image** field
 4. Configure the grid type and size as needed, they can be different from the main scene, but will use the same color and line configuration
 5. Optionally, check **Add Tokens to Encounter** if you want all scene tokens to be added to a combat encounter when the tactical map is activated
@@ -56,13 +56,13 @@ The following settings are available for configuration in the Scene Configuratio
 
 #### 2. Click this button to switch to the Tactical Map. The scene will automatically zoom and center to display the Tactical Map.
 
-SWITCHING WILL ONLY BE DONE ON THE **ACTIVE SCENE**
+### SWITCHING MAPS CAN ONLY BE DONE ON THE **ACTIVE SCENE**
 
 ![image](https://github.com/user-attachments/assets/b2589eec-8645-4213-b0cc-bb3c968ccada)
 
 ![image](https://github.com/user-attachments/assets/f584fe67-79c7-463c-9e9a-69ac65b03c16)
    
-#### 3. Click the button again to return to the original scene settings, restoring the previous zoom and position. The tokens will keep their positions and states in each map too 
+#### 3. Click the button again to return to the original scene settings. The tokens will keep their positions and states on each map and if you add any new token to the scene they will be initially positioned at the margins of the other scene if they fall out of range. 
 
 ## Contributing
 
