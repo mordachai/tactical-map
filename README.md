@@ -58,7 +58,7 @@ The following settings are available for configuration in the Scene Configuratio
 
 2. Click this button to switch to the Tactical Map. The scene will automatically zoom and center to display the entire Tactical Map.
 
-   SWITCHING WILL BE ONLY DONE ON THE **ACTIVE SCENE**
+   SWITCHING WILL ONLY BE DONE ON THE **ACTIVE SCENE**
 
 ![image](https://github.com/user-attachments/assets/c7811391-1fa8-486f-90bf-c9eaca180eda)
    
