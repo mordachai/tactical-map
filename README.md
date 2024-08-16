@@ -14,8 +14,6 @@ It's a quality of life module, especially if you are running a Theather of the M
 
 To install this module, follow these steps:
 
-
-
 1. In Foundry VTT, go to the **Add-on Modules** tab
 2. Click **Install Module**
 3. Paste the following manifest URL into the bottom **Manifest URL** field:
@@ -42,7 +40,7 @@ The following settings are available for configuration in the Scene Configuratio
 
 1. Open the **Scene Configuration** for any scene.
 
-![image](https://github.com/user-attachments/assets/1fdb954c-095b-499d-88c6-2a31f8321fe1)
+![image](https://github.com/user-attachments/assets/eedfeac4-d359-4a43-bcbd-8af3cbe85395)
 
 2. Scroll to the bottom and locate the **Tactical Map** settings
 3. Provide the path to your Tactical Map image in the **Tactical Map Image** field
@@ -52,17 +50,19 @@ The following settings are available for configuration in the Scene Configuratio
 
 ### Switching to the Tactical Map
 
-1. Once the Tactical Map is configured, a new button called **Toggle Tactical Map** will appear in the Token Controls toolbar
+#### 1. Once the Tactical Map is configured, a new button called **Toggle Tactical Map** will appear in the Token Controls toolbar
 
-![image](https://github.com/user-attachments/assets/d6c65a6a-3c91-4c15-9eba-73f35976235e)
+![image](https://github.com/user-attachments/assets/67ddc0b4-1104-481d-adad-33c0c73d008a)
 
-2. Click this button to switch to the Tactical Map. The scene will automatically zoom and center to display the entire Tactical Map.
+#### 2. Click this button to switch to the Tactical Map. The scene will automatically zoom and center to display the Tactical Map.
 
-   SWITCHING WILL ONLY BE DONE ON THE **ACTIVE SCENE**
+SWITCHING WILL ONLY BE DONE ON THE **ACTIVE SCENE**
 
-![image](https://github.com/user-attachments/assets/c7811391-1fa8-486f-90bf-c9eaca180eda)
+![image](https://github.com/user-attachments/assets/b2589eec-8645-4213-b0cc-bb3c968ccada)
+
+![image](https://github.com/user-attachments/assets/f584fe67-79c7-463c-9e9a-69ac65b03c16)
    
-3. Click the button again to return to the original scene settings, restoring the previous zoom and position
+#### 3. Click the button again to return to the original scene settings, restoring the previous zoom and position. The tokens will keep their positions and states in each map too 
 
 ## Contributing
 
