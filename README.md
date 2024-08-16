@@ -7,8 +7,10 @@ It's a quality of life module, especially if you are running a Theather of the M
 ## Features
 
 - Add a Tactical Map image to any scene via the Scene Configuration menu.
-- Automatically switch between the original scene and the tactical map, preserving zoom and position.
+- Fast switch between the original scene and the tactical map, preserving zoom and position.
 - Automatically adds tokens to a combat encounter when switching to the tactical map.
+- Preserve tokens positions and rotations independently.
+- Supports different grid types and sizes for both maps, sharing the same color, line type, and opacity configuration.
 
 ## Installation
 
