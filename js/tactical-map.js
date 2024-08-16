@@ -1,4 +1,3 @@
-// Utility function to create form group HTML
 function createFormGroup(label, inputHtml) {
   return `
     <div class="form-group">
@@ -10,23 +9,14 @@ function createFormGroup(label, inputHtml) {
   `;
 }
 
-// Function to handle adding the Tactical Map to Scene Configuration
 function addTacticalMapToSceneConfig() {
   Hooks.on("renderSceneConfig", (app, html, data) => {
     try {
       const fgImgLabel = html.find('label:contains("Foreground Image")');
-
-      if (!fgImgLabel.length) {
-        console.error("Foreground Image label not found.");
-        return;
-      }
+      if (!fgImgLabel.length) return;
 
       const fgImgGroup = fgImgLabel.closest('.form-group');
-
-      if (!fgImgGroup.length) {
-        console.error("Foreground Image form group not found.");
-        return;
-      }
+      if (!fgImgGroup.length) return;
 
       const tacticalMapHtml = `
         ${createFormGroup("Tactical Map Image", `
@@ -38,9 +28,9 @@ function addTacticalMapToSceneConfig() {
         <p class="notes">An optional image to be used during tactical combat or similar scenarios.</p>
 
         <div class="form-group">
-          <label>Tactical Map Grid / Size</label>
+          <label>Tactical Map Grid Type / Size</label>
           <div class="form-fields">
-            <select name="tacticalMapGridType" style="width: 70%;">
+            <select name="tacticalMapGridType" style="flex: 1.0;">
               ${[
                 { value: 0, text: "Gridless" },
                 { value: 1, text: "Square" },
@@ -50,7 +40,7 @@ function addTacticalMapToSceneConfig() {
                 { value: 5, text: "Hexagonal Columns - Even" }
               ].map(option => `<option value="${option.value}" ${app.object.getFlag("tactical-map", "gridType") === option.value ? "selected" : ""}>${option.text}</option>`).join('')}
             </select> / 
-            <input type="number" name="tacticalMapGridSize" value="${app.object.getFlag("tactical-map", "gridSize") || 100}" style="width: 25%;">
+            <input type="number" name="tacticalMapGridSize" value="${app.object.getFlag("tactical-map", "gridSize") || 100}" style="flex: 0.5;">
           </div>
         </div>
 
@@ -59,10 +49,8 @@ function addTacticalMapToSceneConfig() {
         `)}
       `;
 
-
       $(tacticalMapHtml).insertAfter(fgImgGroup);
 
-      // Initialize FilePicker
       html.find("button.file-picker").last().click(ev => openFilePicker(app, html));
     } catch (error) {
       console.error("Error during SceneConfig rendering:", error);
@@ -88,7 +76,6 @@ function addTacticalMapToSceneConfig() {
   });
 }
 
-// Helper function to open FilePicker
 function openFilePicker(app, html) {
   const picker = new FilePicker({
     type: "image",
@@ -98,7 +85,6 @@ function openFilePicker(app, html) {
   picker.browse();
 }
 
-// Function to add the Toggle Tactical Map button to the Token Controls
 function addTacticalMapButtonToTokenControls() {
   Hooks.on("getSceneControlButtons", (controls) => {
     const tokenControls = controls.find(control => control.name === "token");
@@ -116,28 +102,28 @@ function addTacticalMapButtonToTokenControls() {
   });
 }
 
-// Helper function to toggle the Tactical Map
 async function toggleTacticalMap() {
   const scene = game.scenes.active;
-  if (!scene) {
-    return ui.notifications.error("No active scene found!");
+
+  // Check if the scene is active
+  if (!scene || !scene.isView) {
+    return ui.notifications.warn("You can only toggle the Tactical Map on the active scene.");
   }
 
   const isTacticalMapActive = scene.getFlag("tactical-map", "isActive");
   if (isTacticalMapActive) {
+    await storeTokenPositions(scene, "tacticalTokenPositions");
     await restoreOriginalMap(scene);
   } else {
+    await storeTokenPositions(scene, "originalTokenPositions");
     await activateTacticalMap(scene);
   }
 }
 
-// Function to restore the original map
 async function restoreOriginalMap(scene) {
   try {
     const originalImg = scene.getFlag("tactical-map", "originalImage");
-    if (!originalImg) {
-      return ui.notifications.error("Original scene settings not found.");
-    }
+    if (!originalImg) return ui.notifications.error("Original scene settings not found.");
 
     const updates = {
       "background.src": originalImg,
@@ -149,6 +135,7 @@ async function restoreOriginalMap(scene) {
 
     await scene.update(updates);
     await restoreCanvasPosition(scene);
+    await restoreTokenPositions(scene, "originalTokenPositions");
     await scene.unsetFlag("tactical-map", "isActive");
   } catch (error) {
     console.error("Error restoring original map:", error);
@@ -156,13 +143,10 @@ async function restoreOriginalMap(scene) {
   }
 }
 
-// Function to activate the Tactical Map
 async function activateTacticalMap(scene) {
   try {
     const tacticalMapImage = scene.getFlag("tactical-map", "image");
-    if (!tacticalMapImage) {
-      return ui.notifications.error("No Tactical Map image set for this scene.");
-    }
+    if (!tacticalMapImage) return ui.notifications.error("No Tactical Map image set for this scene.");
 
     const currentImg = scene.background?.src;
     await scene.setFlag("tactical-map", "originalImage", currentImg);
@@ -186,6 +170,7 @@ async function activateTacticalMap(scene) {
       await scene.update(updates);
       await centerCanvasOnTacticalMap(scene, img.width, img.height);
       await scene.setFlag("tactical-map", "isActive", true);
+      await restoreTokenPositions(scene, "tacticalTokenPositions");
       await ensureCombatEncounter(scene);
     };
   } catch (error) {
@@ -194,35 +179,29 @@ async function activateTacticalMap(scene) {
   }
 }
 
-// Store the current canvas position and zoom
 async function storeCanvasPosition(scene) {
   const pan = canvas.stage.pivot;
   const scale = canvas.stage.scale;
   await scene.setFlag("tactical-map", "originalPan", { x: pan.x, y: pan.y });
-  await scene.setFlag("tactical-map", "originalZoom", scale.x); // assuming scale.x and scale.y are the same
+  await scene.setFlag("tactical-map", "originalZoom", scale.x);
 }
 
-// Restore the canvas position and zoom
 async function restoreCanvasPosition(scene) {
   const pan = scene.getFlag("tactical-map", "originalPan");
   const zoom = scene.getFlag("tactical-map", "originalZoom");
   if (pan && zoom) {
     canvas.pan({ x: pan.x, y: pan.y, scale: zoom });
-  } else {
-    console.warn("No stored canvas position and zoom found.");
   }
 }
 
-// Center the canvas on the tactical map and zoom to fit
 async function centerCanvasOnTacticalMap(scene, width, height) {
   const viewRect = canvas.dimensions.sceneRect;
-  const scale = Math.min(viewRect.width / width, viewRect.height / height) * 0.4; // Zoom out slightly to show more of the scene
+  const scale = Math.min(viewRect.width / width, viewRect.height / height) * 0.4;
   const x = width / 2;
   const y = height / 2;
   canvas.pan({ x, y, scale });
 }
 
-// Function to ensure a combat encounter exists and tokens are added
 async function ensureCombatEncounter(scene) {
   let combat = game.combats.active;
   if (!combat) {
@@ -244,7 +223,53 @@ async function ensureCombatEncounter(scene) {
   }
 }
 
-// Initialize the module
+async function storeTokenPositions(scene, flag) {
+  const tokenPositions = {};
+  scene.tokens.contents.forEach(token => {
+    tokenPositions[token.id] = { x: token.x, y: token.y };
+  });
+  await scene.setFlag("tactical-map", flag, tokenPositions);
+}
+
+async function restoreTokenPositions(scene, flag) {
+  const tokenPositions = scene.getFlag("tactical-map", flag);
+  if (!tokenPositions) return;
+
+  for (let tokenId in tokenPositions) {
+    const token = scene.tokens.get(tokenId);
+    if (token) {
+      await token.update(tokenPositions[tokenId], { animate: false });
+    }
+  }
+}
+
+// Hook to handle new tokens being added to the scene
+Hooks.on("createToken", async (scene, tokenData) => {
+  const isTacticalMapActive = scene.getFlag("tactical-map", "isActive");
+  
+  if (isTacticalMapActive) {
+    // If the Tactical Map is active, set initial position on the main map
+    await positionTokenOnInactiveMap(scene, tokenData, "originalTokenPositions");
+  } else {
+    // If the main map is active, set initial position on the Tactical Map
+    await positionTokenOnInactiveMap(scene, tokenData, "tacticalTokenPositions");
+  }
+});
+
+// Function to position a token near the center of the inactive map
+async function positionTokenOnInactiveMap(scene, tokenData, flag) {
+  const tokenId = tokenData._id;
+  const tokenPositions = scene.getFlag("tactical-map", flag) || {};
+  const centerX = scene.width / 2;
+  const centerY = scene.height / 2;
+
+  // Check if token is already positioned in the inactive map; if not, position it near the center
+  if (!tokenPositions[tokenId]) {
+    tokenPositions[tokenId] = { x: centerX, y: centerY };
+    await scene.setFlag("tactical-map", flag, tokenPositions);
+  }
+}
+
 Hooks.once('init', () => {
   addTacticalMapToSceneConfig();
   addTacticalMapButtonToTokenControls();
