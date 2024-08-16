@@ -64,7 +64,7 @@ The following settings are available for configuration in the Scene Configuratio
 
 ![image](https://github.com/user-attachments/assets/f584fe67-79c7-463c-9e9a-69ac65b03c16)
    
-#### 3. Click the button again to return to the original scene settings. The tokens will keep their positions and states on each map and if you add any new token to the scene they will be initially positioned at the margins of the other scene if they fall out of range. 
+#### 3. Click the button again to return to the original scene settings. The tokens will keep their positions on each map and if you add any new token to the scene they will initially be positioned at the margins of the other scene in case they fall out of range due to scene sizes. 
 
 ## Contributing
 
