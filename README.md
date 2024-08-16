@@ -42,7 +42,7 @@ The following settings are available for configuration in the Scene Configuratio
 
 1. Open the **Scene Configuration** for any scene.
 
- ![image](https://github.com/user-attachments/assets/7dd07bc6-89e1-4096-9dc0-bb61c3916868)
+![image](https://github.com/user-attachments/assets/1fdb954c-095b-499d-88c6-2a31f8321fe1)
 
 2. Scroll to the bottom and locate the **Tactical Map** settings
 3. Provide the path to your Tactical Map image in the **Tactical Map Image** field
