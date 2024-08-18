@@ -19,16 +19,15 @@ To install this module, follow these steps:
 
 1. In Foundry VTT, go to the **Add-on Modules** tab
 2. Click **Install Module**
-3. Paste the following manifest URL into the bottom **Manifest URL** field:
-4. 
+3. Paste the following manifest URL into the bottom **Manifest URL** field: 
 https://raw.githubusercontent.com/mordachai/tactical-map/main/module.json
 
 OR
 
 Search in the top bar for "tactical map"
 
-6. Click **Install**
-7. Enable the module in your **Game Settings** under **Manage Modules**
+5. Click **Install**
+6. Enable the module in your **Game Settings** under **Manage Modules**
 
 ## Usage and Settings
 
