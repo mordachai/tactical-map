@@ -1,122 +1,33 @@
-function createFormGroup(label, inputHtml) {
-  return `
-    <div class="form-group">
-      <label>${label}</label>
-      <div class="form-fields">
-        ${inputHtml}
-      </div>
-    </div>
-  `;
-}
+import { switchTokenArt } from './token-art-switcher.js';
+import { debugLog } from './logger-tcmap.js';
 
-function addTacticalMapToSceneConfig() {
-  Hooks.on("renderSceneConfig", (app, html, data) => {
-    try {
-      const fgImgLabel = html.find('label:contains("Foreground Image")');
-      if (!fgImgLabel.length) return;
-
-      const fgImgGroup = fgImgLabel.closest('.form-group');
-      if (!fgImgGroup.length) return;
-
-      const tacticalMapHtml = `
-        ${createFormGroup("Tactical Map Image", `
-          <input type="text" name="tacticalMapImage" value="${app.object.getFlag("tactical-map", "image") || ""}" placeholder="path/to/tactical/map/image">
-          <button type="button" class="file-picker" data-type="image" data-target="input[name='tacticalMapImage']" title="Browse Files">
-            <i class="fas fa-file-import"></i>
-          </button>
-        `)}
-        <p class="notes">An optional image to be used during tactical combat or similar scenarios.</p>
-
-        <div class="form-group">
-          <label>Tactical Map Grid Type / Size</label>
-          <div class="form-fields">
-            <select name="tacticalMapGridType" style="flex: 1.0;">
-              ${[
-                { value: 0, text: "Gridless" },
-                { value: 1, text: "Square" },
-                { value: 2, text: "Hexagonal Rows - Odd" },
-                { value: 3, text: "Hexagonal Rows - Even" },
-                { value: 4, text: "Hexagonal Columns - Odd" },
-                { value: 5, text: "Hexagonal Columns - Even" }
-              ].map(option => `<option value="${option.value}" ${app.object.getFlag("tactical-map", "gridType") === option.value ? "selected" : ""}>${option.text}</option>`).join('')}
-            </select> / 
-            <input type="number" name="tacticalMapGridSize" value="${app.object.getFlag("tactical-map", "gridSize") || 100}" style="flex: 0.5;">
-          </div>
-        </div>
-
-        ${createFormGroup("Add Tokens to Encounter", `
-          <input type="checkbox" name="addTokensToEncounter" ${app.object.getFlag("tactical-map", "addTokensToEncounter") ? "checked" : ""}>
-        `)}
-      `;
-
-      $(tacticalMapHtml).insertAfter(fgImgGroup);
-
-      html.find("button.file-picker").last().click(ev => openFilePicker(app, html));
-    } catch (error) {
-      console.error("Error during SceneConfig rendering:", error);
-    }
-  });
-
-  Hooks.on("closeSceneConfig", async (app, html) => {
-    try {
-      const flagData = {
-        image: html.find("input[name='tacticalMapImage']").val(),
-        gridType: parseInt(html.find("select[name='tacticalMapGridType']").val()),
-        gridSize: parseInt(html.find("input[name='tacticalMapGridSize']").val()),
-        addTokensToEncounter: html.find("input[name='addTokensToEncounter']").is(":checked")
-      };
-
-      for (let key in flagData) {
-        await app.object.setFlag("tactical-map", key, flagData[key]);
-      }
-    } catch (error) {
-      console.error("Error saving Tactical Map settings:", error);
-      ui.notifications.error("Failed to save Tactical Map settings. Please check the console for more details.");
-    }
-  });
-}
-
-function openFilePicker(app, html) {
-  const picker = new FilePicker({
-    type: "image",
-    current: app.object.getFlag("tactical-map", "image") || "",
-    callback: path => html.find("input[name='tacticalMapImage']").val(path)
-  });
-  picker.browse();
-}
-
-function addTacticalMapButtonToTokenControls() {
-  Hooks.on("getSceneControlButtons", (controls) => {
-    const tokenControls = controls.find(control => control.name === "token");
-
-    if (tokenControls) {
-      tokenControls.tools.push({
-        name: "toggleTacticalMap",
-        title: "Toggle Tactical Map",
-        icon: "fas fa-map-marked-alt",
-        visible: game.user.isGM,
-        onClick: toggleTacticalMap,
-        button: true
-      });
-    }
-  });
-}
-
-async function toggleTacticalMap() {
+export async function toggleTacticalMap() {
   const scene = game.scenes.active;
 
-  // Check if the scene is active
   if (!scene || !scene.isView) {
     return ui.notifications.warn("You can only toggle the Tactical Map on the active scene.");
   }
 
   const isTacticalMapActive = scene.getFlag("tactical-map", "isActive");
+  const currentMap = isTacticalMapActive ? "Tactical Map" : "Main Map";
+  console.log(`Toggling from ${currentMap} to ${isTacticalMapActive ? "Main Map" : "Tactical Map"}`);
+  
+  scene.tokens.contents.forEach(token => {
+    console.log(`Initial Position on ${currentMap}: Token ${token.name} at x: ${token.x}, y: ${token.y}, rotation: ${token.rotation}`);
+  });
+
   if (isTacticalMapActive) {
     await storeTokenPositions(scene, "tacticalTokenPositions");
     await restoreOriginalMap(scene);
+    console.log("Toggled to Main Map.");
+    await restoreTokenPositions(scene, "originalTokenPositions");
+    await switchTokenArt(scene, "deactivate"); // Ensure this is called
   } else {
     await storeTokenPositions(scene, "originalTokenPositions");
     await activateTacticalMap(scene);
+    console.log("Toggled to Tactical Map.");
+    await restoreTokenPositions(scene, "tacticalTokenPositions");
+    await switchTokenArt(scene, "activate"); // Ensure this is called
   }
 }
 
@@ -137,6 +48,11 @@ async function restoreOriginalMap(scene) {
     await restoreCanvasPosition(scene);
     await restoreTokenPositions(scene, "originalTokenPositions");
     await scene.unsetFlag("tactical-map", "isActive");
+
+    console.log("Token positions after toggling back to Main Map:");
+    scene.tokens.contents.forEach(token => {
+      console.log(`Token ${token.name} at x: ${token.x}, y: ${token.y}, rotation: ${token.rotation}`);
+    });
   } catch (error) {
     console.error("Error restoring original map:", error);
     ui.notifications.error("Failed to restore the original map.");
@@ -172,11 +88,49 @@ async function activateTacticalMap(scene) {
       await scene.setFlag("tactical-map", "isActive", true);
       await restoreTokenPositions(scene, "tacticalTokenPositions");
       await ensureCombatEncounter(scene);
+
+      console.log("Token positions after toggling to Tactical Map:");
+      scene.tokens.contents.forEach(token => {
+        console.log(`Token ${token.name} at x: ${token.x}, y: ${token.y}, rotation: ${token.rotation}`);
+      });
     };
   } catch (error) {
     console.error("Error activating Tactical Map:", error);
     ui.notifications.error("Failed to activate the Tactical Map.");
   }
+}
+
+async function restoreTokenPositions(scene, flag) {
+  const tokenData = scene.getFlag("tactical-map", flag);
+  if (!tokenData) return;
+
+  const currentMap = scene.getFlag("tactical-map", "isActive") ? "Tactical Map" : "Main Map";
+
+  for (let tokenId in tokenData) {
+    const token = scene.tokens.get(tokenId);
+    if (token) {
+      let { x, y, rotation } = tokenData[tokenId];
+
+      x = Math.round(x);  // Round to nearest pixel
+      y = Math.round(y);  // Round to nearest pixel
+
+      await token.update({ x, y, rotation }, { animate: false });
+
+      console.log(`Token ${token.name} position on ${currentMap}: x: ${x}, y: ${y}, rotation: ${rotation}`);
+    }
+  }
+}
+
+async function storeTokenPositions(scene, flag) {
+  const tokenData = {};
+  scene.tokens.contents.forEach(token => {
+    tokenData[token.id] = {
+      x: Math.round(token.x),   // Round to nearest pixel
+      y: Math.round(token.y),   // Round to nearest pixel
+      rotation: token.rotation
+    };
+  });
+  await scene.setFlag("tactical-map", flag, tokenData);
 }
 
 async function storeCanvasPosition(scene) {
@@ -223,54 +177,39 @@ async function ensureCombatEncounter(scene) {
   }
 }
 
-async function storeTokenPositions(scene, flag) {
-  const tokenPositions = {};
-  scene.tokens.contents.forEach(token => {
-    tokenPositions[token.id] = { x: token.x, y: token.y };
-  });
-  await scene.setFlag("tactical-map", flag, tokenPositions);
-}
-
-async function restoreTokenPositions(scene, flag) {
-  const tokenPositions = scene.getFlag("tactical-map", flag);
-  if (!tokenPositions) return;
-
-  for (let tokenId in tokenPositions) {
-    const token = scene.tokens.get(tokenId);
-    if (token) {
-      await token.update(tokenPositions[tokenId], { animate: false });
-    }
-  }
-}
-
-// Hook to handle new tokens being added to the scene
 Hooks.on("createToken", async (scene, tokenData) => {
   const isTacticalMapActive = scene.getFlag("tactical-map", "isActive");
-  
+
   if (isTacticalMapActive) {
-    // If the Tactical Map is active, set initial position on the main map
+    console.log(`Adding Token ${tokenData.name} in Tactical Map at x: ${tokenData.x}, y: ${tokenData.y}`);
     await positionTokenOnInactiveMap(scene, tokenData, "originalTokenPositions");
   } else {
-    // If the main map is active, set initial position on the Tactical Map
     await positionTokenOnInactiveMap(scene, tokenData, "tacticalTokenPositions");
   }
 });
 
-// Function to position a token near the center of the inactive map
 async function positionTokenOnInactiveMap(scene, tokenData, flag) {
   const tokenId = tokenData._id;
   const tokenPositions = scene.getFlag("tactical-map", flag) || {};
-  const centerX = scene.width / 2;
-  const centerY = scene.height / 2;
+  const mapWidth = scene.width;
+  const mapHeight = scene.height;
+  const paddingPercentage = 0.05; // 5% padding
 
-  // Check if token is already positioned in the inactive map; if not, position it near the center
+  const minX = mapWidth * paddingPercentage;
+  const minY = mapHeight * paddingPercentage;
+  const maxX = mapWidth * (1 - paddingPercentage);
+  const maxY = mapHeight * (1 - paddingPercentage);
+
+  let x = tokenData.x || mapWidth / 2;
+  let y = tokenData.y || mapHeight / 2;
+
+  // Adjust position to be within valid bounds
+  x = Math.max(minX, Math.min(x, maxX));
+  y = Math.max(minY, Math.min(y, maxY));
+
+  // Only update the position if it's out of bounds or not set
   if (!tokenPositions[tokenId]) {
-    tokenPositions[tokenId] = { x: centerX, y: centerY };
+    tokenPositions[tokenId] = { x, y };
     await scene.setFlag("tactical-map", flag, tokenPositions);
   }
 }
-
-Hooks.once('init', () => {
-  addTacticalMapToSceneConfig();
-  addTacticalMapButtonToTokenControls();
-});
