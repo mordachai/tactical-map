@@ -4,6 +4,8 @@
 
 It's a quality of life module, especially if you are running a Theather of the Mind game, but want to solve combats more tactically.
 
+https://www.youtube.com/watch?v=oQfRU0lHkbE
+
 ## Features
 
 - Add a Tactical Map image to any scene via the Scene Configuration menu.
