@@ -26,8 +26,8 @@ OR
 
 Search in the top bar for "tactical map"
 
-5. Click **Install**
-6. Enable the module in your **Game Settings** under **Manage Modules**
+4. Click **Install**
+5. Enable the module in your **Game Settings** under **Manage Modules**
 
 ## Usage and Settings
 
