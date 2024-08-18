@@ -8,6 +8,7 @@ It's a quality of life module, especially if you are running a Theather of the M
 
 - Add a Tactical Map image to any scene via the Scene Configuration menu.
 - Fast switch between the original scene and the tactical map, preserving zoom and position.
+- Use alternative token images for each type of map: top-down and isometric
 - Automatically adds tokens to a combat encounter when switching to the tactical map.
 - Preserve tokens positions and rotations independently.
 - Supports different grid types and sizes for both maps, sharing the same color, line type, and opacity configuration.
@@ -36,6 +37,7 @@ The following settings are available for configuration in the Scene Configuratio
 - **Tactical Map Image**: The image path for the Tactical Map
 - **Tactical Map Grid Type**: The type of grid to be used on the Tactical Map (Gridless, Square, 2x Hexagonal)
 - **Tactical Map Grid Size**: The size of the grid on the Tactical Map
+- **Tactical Map Type:** Top-down View and Isometric View. It is only important if you want to use alternative token images for each view. 
 - **Add Tokens to Encounter**: Automatically adds all scene tokens to a combat encounter when the Tactical Map is activated
 
 ### Adding a Tactical Map
@@ -49,6 +51,17 @@ The following settings are available for configuration in the Scene Configuratio
 4. Configure the grid type and size as needed, they can be different from the main scene, but will use the same color and line configuration
 5. Optionally, check **Add Tokens to Encounter** if you want all scene tokens to be added to a combat encounter when the tactical map is activated
 6. Save your scene
+
+### Alternative token images
+
+Put in the same folder of your token image one or two variants to be used with the tactical maps:
+
+#### Top-down view: {token image}_tdv.ext
+#### Isometric view: {token image}_isv.ext
+
+If you don't have images for that map type don't worry, the main one will be used.
+
+![image](https://github.com/user-attachments/assets/af073b58-4ea2-4809-8c2f-28fbd4b43fc5)
 
 ### Switching to the Tactical Map
 
