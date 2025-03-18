@@ -1,6 +1,6 @@
 # Changelog
 
-## [2.1.0] - 2024-03-18
+## [2.1.0] - 2025-03-18
 - **Can work with v.13**: added verification of version and can technically work with v.12 and v13 (tested in v.12).
 - **Fixed Tactical Map Positioning**: keep the map in the last position it was focused on the screen when switching maps.
 
