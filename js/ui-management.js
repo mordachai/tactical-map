@@ -51,7 +51,7 @@ function addTacticalMapToSceneConfig() {
             </select> / 
             <input type="number" name="tacticalMapGridSize" value="${app.object.getFlag("tactical-map", "gridSize") || 100}" style="flex: 0.5;">
           </div>
-          <p class="notes">Uses the grid style, thickness and color of the Scene Grid Tab.</p>
+          <p class="notes">Uses the grid style, thickness, color, and opacity of the Scene Grid Tab.</p>
         </div>
 
         ${createFormGroup("Add Tokens to Encounter", `

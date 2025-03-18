@@ -189,6 +189,11 @@ async function activateTacticalMap(scene) {
       await scene.update(updates);
       await scene.setFlag("tactical-map", "isActive", true);
       
+      // Add tokens to combat if the setting is enabled
+      if (scene.getFlag("tactical-map", "addTokensToEncounter")) {
+        await ensureCombatEncounter(scene);
+      }
+      
       // After canvas is ready, restore tactical map position or center the view
       Hooks.once("canvasReady", () => {
         const previousTacticalPosition = scene.getFlag("tactical-map", "tacticalMapPosition");
@@ -327,6 +332,65 @@ async function restoreTokenPositions(scene, flag) {
     await scene.updateEmbeddedDocuments("Token", updates, { animate: false });
   }
 }
+
+// Add this function to your tactical-map.js file
+
+/**
+ * Ensures a combat encounter exists and adds tokens to it if needed
+ * @param {Scene} scene - The current scene
+ * @returns {Promise<boolean>} Success or failure
+ */
+async function ensureCombatEncounter(scene) {
+  try {
+    // Check if the setting is enabled
+    const addTokensToEncounter = scene.getFlag("tactical-map", "addTokensToEncounter");
+    if (!addTokensToEncounter) {
+      console.log("Add Tokens to Encounter setting is disabled");
+      return false;
+    }
+    
+    // Get or create a combat encounter for this scene
+    let combat = game.combats.find(c => c.scene?.id === scene.id);
+    
+    // If no combat exists for this scene, create one
+    if (!combat) {
+      console.log("Creating new combat encounter for scene");
+      combat = await Combat.create({ scene: scene.id });
+    }
+    
+    // Get all tokens on the scene that belong to actors
+    const tokens = scene.tokens.contents.filter(t => t.actor);
+    
+    // Identify tokens that aren't already in the combat
+    const tokensToAdd = [];
+    for (const token of tokens) {
+      // Skip if token is already in the combat
+      const isInCombat = combat.combatants.some(c => c.tokenId === token.id);
+      if (!isInCombat) {
+        tokensToAdd.push({
+          tokenId: token.id,
+          sceneId: scene.id,
+          actorId: token.actor.id,
+          hidden: token.hidden
+        });
+      }
+    }
+    
+    // Add tokens to combat if any need to be added
+    if (tokensToAdd.length > 0) {
+      console.log(`Adding ${tokensToAdd.length} tokens to combat`);
+      await combat.createEmbeddedDocuments("Combatant", tokensToAdd);
+      // Optional: Automatically show the combat tracker
+      ui.combat.render(true);
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error setting up combat encounter:", error);
+    return false;
+  }
+}
+
 
 // Handle token creation when tactical map is active/inactive
 Hooks.on("createToken", async (scene, tokenData) => {
