@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.1.0] - 2024-03-18
+- **Can work with v.13**: added verification of version and can technically work with v.12 and v13 (tested in v.12).
+- **Fixed Tactical Map Positioning**: keep the map in the last position it was focused on the screen when switching maps.
+
 ## [2.0.0] - 2024-08-18
 - **Tactical Map Types**: Now you can have alternate tokens when toggling the maps.
 - **Alternative Tokens**: Use alternative tokens automatically for each map type by placing them in the same folder with a suffix in their names. Top-down view: {token image}_tdv.ext Isometric view: {token image}_isv.ext
