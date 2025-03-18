@@ -1,7 +1,88 @@
-// tactical-map.js with reduced notifications
+// tactical-map.js
 import { switchTokenArt } from './token-art-switcher.js';
 import { debugLog } from './logger-tcmap.js';
 import { isV13OrLater } from './compatibility.js';
+
+/**
+ * Stores the current canvas view position and zoom
+ * @param {Scene} scene - The scene
+ * @param {string} flag - Flag name to store the position under
+ */
+async function storeCanvasPosition(scene, flag) {
+  try {
+    // Store the current canvas position and zoom
+    const viewPosition = {
+      panX: canvas.stage.pivot.x,
+      panY: canvas.stage.pivot.y,
+      zoom: canvas.stage.scale.x,
+      timestamp: Date.now() // Store timestamp for tracking recency
+    };
+    
+    await scene.setFlag("tactical-map", flag, viewPosition);
+    console.log(`Stored canvas position for ${flag}:`, viewPosition);
+    return true;
+  } catch (error) {
+    console.error(`Error storing canvas position for ${flag}:`, error);
+    return false;
+  }
+}
+
+/**
+ * Restores a saved canvas position or defaults to centering the map
+ * @param {Scene} scene - The scene
+ * @param {string} flag - Flag name where the position is stored
+ * @param {boolean} preferCentering - Whether to prefer centering the map if no position exists
+ */
+async function restoreCanvasPosition(scene, flag, preferCentering = false) {
+  try {
+    // Get the stored position
+    const storedPosition = scene.getFlag("tactical-map", flag);
+    
+    if (storedPosition && !preferCentering) {
+      // Use stored position if it exists and we're not preferring centering
+      console.log(`Restoring canvas position from ${flag}:`, storedPosition);
+      canvas.pan({
+        x: storedPosition.panX,
+        y: storedPosition.panY,
+        scale: storedPosition.zoom
+      });
+      return true;
+    } else {
+      // Center the map if no stored position or we prefer centering
+      console.log(`Centering map (no stored position in ${flag} or centering preferred)`);
+      centerMap(scene);
+      return true;
+    }
+  } catch (error) {
+    console.error(`Error restoring canvas position from ${flag}:`, error);
+    // Fallback to centering if there's an error
+    centerMap(scene);
+    return false;
+  }
+}
+
+/**
+ * Centers the current map in view
+ * @param {Scene} scene - The scene to center
+ */
+function centerMap(scene) {
+  const width = scene.width;
+  const height = scene.height;
+  const viewRect = canvas.dimensions.sceneRect;
+  
+  // Calculate a scale that shows the whole map with some margins
+  const scale = Math.min(
+    viewRect.width / width, 
+    viewRect.height / height
+  ) * 0.9; // 90% of fitting scale for some margin
+  
+  // Center on the middle of the map
+  canvas.pan({
+    x: width / 2,
+    y: height / 2,
+    scale: scale
+  });
+}
 
 // Improved toggleTacticalMap function with minimal notifications
 export async function toggleTacticalMap() {
@@ -30,39 +111,31 @@ export async function toggleTacticalMap() {
       }
     }
     
-    // Log initial state (debug only, no UI notification)
-    debugLog(`Initial token positions on ${currentMap}:`);
-    scene.tokens.contents.forEach(token => {
-      debugLog(`Token ${token.name} at x: ${token.x}, y: ${token.y}, rotation: ${token.rotation}`);
-    });
-
     // Perform the toggle operation
     if (isTacticalMapActive) {
-      // Main Map: Store current positions first, then restore the original map
+      // Switching from Tactical Map to Main Map
       await storeTokenPositions(scene, "tacticalTokenPositions");
       const restored = await restoreOriginalMap(scene);
       if (!restored) {
         if (toggleButton) toggleButton.disabled = false;
-        return; // Error already shown by the function
+        return;
       }
-      debugLog("Toggled to Main Map.");
       await restoreTokenPositions(scene, "originalTokenPositions");
       await switchTokenArt(scene, "deactivate");
     } else {
-      // Tactical Map: Store current positions first, then activate tactical map
+      // Switching from Main Map to Tactical Map
       await storeTokenPositions(scene, "originalTokenPositions");
       const activated = await activateTacticalMap(scene);
       if (!activated) {
         if (toggleButton) toggleButton.disabled = false;
-        return; // Error already shown by the function
+        return;
       }
-      debugLog("Toggled to Tactical Map.");
       await restoreTokenPositions(scene, "tacticalTokenPositions");
       await switchTokenArt(scene, "activate");
     }
     
     // Only show one success notification at the end
-    //ui.notifications.info(`Switched to ${isTacticalMapActive ? "Main Map" : "Tactical Map"}`);
+    // ui.notifications.info(`Switched to ${isTacticalMapActive ? "Main Map" : "Tactical Map"}`);
     
     // Emit hook for other modules
     Hooks.callAll("toggleTacticalMap", scene, isTacticalMapActive ? "deactivate" : "activate");
@@ -76,33 +149,29 @@ export async function toggleTacticalMap() {
   }
 }
 
-// Improved activateTacticalMap with minimal notifications
+// Improved activateTacticalMap with proper error handling
 async function activateTacticalMap(scene) {
   try {
     const tacticalMapImage = scene.getFlag("tactical-map", "image");
-    // Double-check (should have been caught earlier, but just in case)
     if (!tacticalMapImage) {
       ui.notifications.warn("No Tactical Map image set for this scene.");
       return false;
     }
 
+    // Store current position for the main map before switching
+    await storeCanvasPosition(scene, "mainMapPosition");
+    
     // Store original map settings
     const currentImg = scene.background?.src;
-    
-    // Store simple values, not complex objects with potential circular references
     await scene.setFlag("tactical-map", "originalSettings", {
       image: currentImg,
       width: scene.width,
       height: scene.height,
       gridType: scene.grid.type,
-      gridSize: scene.grid.size,
-      // Store primitive values, not objects
-      panX: canvas.stage.pivot.x,
-      panY: canvas.stage.pivot.y,
-      zoom: canvas.stage.scale.x  // Just store the x scale as a number
+      gridSize: scene.grid.size
     });
 
-    debugLog("Original settings stored:", scene.getFlag("tactical-map", "originalSettings"));
+    debugLog("Original settings stored");
     
     try {
       // Load image dimensions first
@@ -113,18 +182,23 @@ async function activateTacticalMap(scene) {
         "background.src": tacticalMapImage,
         width: imgDimensions.width,
         height: imgDimensions.height,
-        "grid.type": scene.getFlag("tactical-map", "gridType") || 1, // Default to square if not set
-        "grid.size": scene.getFlag("tactical-map", "gridSize") || 100 // Default to 100px if not set
+        "grid.type": scene.getFlag("tactical-map", "gridType") || 1,
+        "grid.size": scene.getFlag("tactical-map", "gridSize") || 100
       };
 
       await scene.update(updates);
-      
-      // Set tactical map as active
       await scene.setFlag("tactical-map", "isActive", true);
       
-      // Adjust canvas position after map is fully loaded
+      // After canvas is ready, restore tactical map position or center the view
       Hooks.once("canvasReady", () => {
-        centerCanvasOnTacticalMap(scene, imgDimensions.width, imgDimensions.height);
+        const previousTacticalPosition = scene.getFlag("tactical-map", "tacticalMapPosition");
+        if (previousTacticalPosition) {
+          // Restore previous tactical map position if it exists
+          restoreCanvasPosition(scene, "tacticalMapPosition", false);
+        } else {
+          // First time using this tactical map, center it
+          centerMap(scene);
+        }
       });
       
       return true;
@@ -157,9 +231,12 @@ function loadImagePromise(src) {
   });
 }
 
-// Improved restoreOriginalMap with minimal notifications
+// Improved restoreOriginalMap with better error handling
 async function restoreOriginalMap(scene) {
   try {
+    // Store the current tactical map position before switching back
+    await storeCanvasPosition(scene, "tacticalMapPosition");
+    
     const originalSettings = scene.getFlag("tactical-map", "originalSettings");
     if (!originalSettings) {
       ui.notifications.warn("Original scene settings not found.");
@@ -175,17 +252,13 @@ async function restoreOriginalMap(scene) {
     };
 
     await scene.update(updates);
+    await scene.unsetFlag("tactical-map", "isActive");
     
-    // Wait for canvas to refresh before restoring view
+    // After canvas is ready, restore original map position
     Hooks.once("canvasReady", () => {
-      canvas.pan({
-        x: originalSettings.panX,
-        y: originalSettings.panY,
-        scale: originalSettings.zoom
-      });
+      restoreCanvasPosition(scene, "mainMapPosition", false);
     });
     
-    await scene.unsetFlag("tactical-map", "isActive");
     return true;
   } catch (error) {
     console.error("Error restoring original map:", error);
@@ -255,15 +328,6 @@ async function restoreTokenPositions(scene, flag) {
   }
 }
 
-// Function to center canvas on tactical map
-async function centerCanvasOnTacticalMap(scene, width, height) {
-  const viewRect = canvas.dimensions.sceneRect;
-  const scale = Math.min(viewRect.width / width, viewRect.height / height) * 0.4;
-  const x = width / 2;
-  const y = height / 2;
-  canvas.pan({ x, y, scale });
-}
-
 // Handle token creation when tactical map is active/inactive
 Hooks.on("createToken", async (scene, tokenData) => {
   const isTacticalMapActive = scene.getFlag("tactical-map", "isActive");
@@ -315,5 +379,7 @@ export {
   restoreOriginalMap,
   storeTokenPositions,
   restoreTokenPositions,
-  centerCanvasOnTacticalMap
+  storeCanvasPosition,
+  restoreCanvasPosition,
+  centerMap
 };
