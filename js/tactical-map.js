@@ -2,6 +2,7 @@
 import { switchTokenArt } from './token-art-switcher.js';
 import { debugLog } from './logger-tcmap.js';
 import { isV13OrLater } from './compatibility.js';
+import { toggleBackgroundBlur } from './background-effects.js';
 
 /**
  * Stores the current canvas view position and zoom
@@ -84,7 +85,6 @@ function centerMap(scene) {
   });
 }
 
-// Improved toggleTacticalMap function with minimal notifications
 export async function toggleTacticalMap() {
   const scene = game.scenes.active;
 
@@ -105,7 +105,8 @@ export async function toggleTacticalMap() {
     if (!isTacticalMapActive) {
       const tacticalMapImage = scene.getFlag("tactical-map", "image");
       if (!tacticalMapImage) {
-        ui.notifications.warn("No Tactical Map configured for this scene. Configure it in Scene Settings.");
+        // If no tactical map is configured, toggle background blur instead
+        await toggleBackgroundBlur(scene);
         if (toggleButton) toggleButton.disabled = false;
         return;
       }
@@ -333,7 +334,6 @@ async function restoreTokenPositions(scene, flag) {
   }
 }
 
-// Add this function to your tactical-map.js file
 
 /**
  * Ensures a combat encounter exists and adds tokens to it if needed

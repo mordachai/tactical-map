@@ -28,6 +28,29 @@ Hooks.once('init', () => {
       }
     }
   });
+
+  // Setting for blur amount when no tactical map is set
+  game.settings.register("tactical-map", "blurAmount", {
+    name: "Background Blur Amount",
+    hint: "The amount of blur to apply to the scene background when no tactical map is set (5-30).",
+    scope: "world",
+    config: true,
+    type: Number,
+    default: 20,
+    range: {
+      min: 5,
+      max: 30,
+      step: 1
+    },
+    onChange: value => {
+      if (canvas.scene) {
+        // Import dynamically to avoid circular imports
+        import('./background-effects.js').then(module => {
+          module.updateBlurAmount(canvas.scene, value);
+        });
+      }
+    }
+  });
   
   debugLog("global-config.js loaded");
 });
