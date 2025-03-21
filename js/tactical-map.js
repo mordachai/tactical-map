@@ -2,7 +2,9 @@
 import { switchTokenArt } from './token-art-switcher.js';
 import { debugLog } from './logger-tcmap.js';
 import { isV13OrLater } from './compatibility.js';
-import { toggleBackgroundBlur } from './background-effects.js';
+import { toggleBackgroundBlur, forceApplyBlur, forceRemoveBlur } from './background-effects.js';
+
+
 
 /**
  * Stores the current canvas view position and zoom
@@ -101,42 +103,99 @@ export async function toggleTacticalMap() {
     const currentMap = isTacticalMapActive ? "Tactical Map" : "Main Map";
     debugLog(`Toggling from ${currentMap} to ${isTacticalMapActive ? "Main Map" : "Tactical Map"}`);
     
-    // Check if tactical map image exists before proceeding (when activating)
-    if (!isTacticalMapActive) {
-      const tacticalMapImage = scene.getFlag("tactical-map", "image");
-      if (!tacticalMapImage) {
-        // If no tactical map is configured, toggle background blur instead
-        await toggleBackgroundBlur(scene);
-        if (toggleButton) toggleButton.disabled = false;
-        return;
-      }
-    }
+    // Check for tactical map image
+    const tacticalMapImage = scene.getFlag("tactical-map", "image");
+    const tacticalGridType = scene.getFlag("tactical-map", "gridType") || 1;
     
-    // Perform the toggle operation
-    if (isTacticalMapActive) {
-      // Switching from Tactical Map to Main Map
-      await storeTokenPositions(scene, "tacticalTokenPositions");
-      const restored = await restoreOriginalMap(scene);
-      if (!restored) {
-        if (toggleButton) toggleButton.disabled = false;
-        return;
+    // If no tactical map is configured
+    if (!tacticalMapImage) {
+      if (isTacticalMapActive) {
+        // Deactivating - restore original grid and turn off blur
+        debugLog("Deactivating tactical map with no image - restoring original settings");
+        
+        // IMPORTANT: Store token positions before changing anything
+        await storeTokenPositions(scene, "tacticalTokenPositions");
+        
+        // Get original settings
+        const originalSettings = scene.getFlag("tactical-map", "originalSettings");
+        
+        // IMPORTANT: Make sure we have the original grid type and restore it
+        if (originalSettings && originalSettings.gridType !== undefined) {
+          debugLog(`Restoring original grid type: ${originalSettings.gridType}`);
+          
+          // Update only the grid type
+          await scene.update({
+            "grid.type": originalSettings.gridType
+          });
+        } else {
+          console.error("Original grid type not found in settings!");
+        }
+        
+        // Set flag that tactical map is inactive BEFORE turning off blur
+        await scene.unsetFlag("tactical-map", "isActive");
+        
+        // Restore tokens
+        await restoreTokenPositions(scene, "originalTokenPositions");
+        
+        // Manually remove blur filter
+        await forceRemoveBlur(scene);
+      } else {
+        // Activating without image - store positions, update grid type and add blur
+        debugLog("Activating tactical map with no image - applying grid type and blur");
+        
+        // IMPORTANT: Store the original grid type BEFORE changing it
+        const originalGridType = scene.grid.type;
+        debugLog(`Storing original grid type: ${originalGridType}`);
+        
+        await scene.setFlag("tactical-map", "originalSettings", {
+          gridType: originalGridType
+        });
+        
+        await storeTokenPositions(scene, "originalTokenPositions");
+        
+        // Update just the grid type
+        await scene.update({
+          "grid.type": tacticalGridType
+        });
+        
+        // Set flag that tactical map is active BEFORE adding blur
+        await scene.setFlag("tactical-map", "isActive", true);
+        
+        // Restore tokens
+        await restoreTokenPositions(scene, "tacticalTokenPositions");
+        
+        // Manually apply blur
+        await forceApplyBlur(scene);
+        
+        // Add tokens to combat if enabled
+        if (scene.getFlag("tactical-map", "addTokensToEncounter")) {
+          await ensureCombatEncounter(scene);
+        }
       }
-      await restoreTokenPositions(scene, "originalTokenPositions");
-      await switchTokenArt(scene, "deactivate");
     } else {
-      // Switching from Main Map to Tactical Map
-      await storeTokenPositions(scene, "originalTokenPositions");
-      const activated = await activateTacticalMap(scene);
-      if (!activated) {
-        if (toggleButton) toggleButton.disabled = false;
-        return;
+      // Normal flow with tactical map image
+      if (isTacticalMapActive) {
+        // Switching from Tactical Map to Main Map
+        await storeTokenPositions(scene, "tacticalTokenPositions");
+        const restored = await restoreOriginalMap(scene);
+        if (!restored) {
+          if (toggleButton) toggleButton.disabled = false;
+          return;
+        }
+        await restoreTokenPositions(scene, "originalTokenPositions");
+        await switchTokenArt(scene, "deactivate");
+      } else {
+        // Switching from Main Map to Tactical Map
+        await storeTokenPositions(scene, "originalTokenPositions");
+        const activated = await activateTacticalMap(scene);
+        if (!activated) {
+          if (toggleButton) toggleButton.disabled = false;
+          return;
+        }
+        await restoreTokenPositions(scene, "tacticalTokenPositions");
+        await switchTokenArt(scene, "activate");
       }
-      await restoreTokenPositions(scene, "tacticalTokenPositions");
-      await switchTokenArt(scene, "activate");
     }
-    
-    // Only show one success notification at the end
-    // ui.notifications.info(`Switched to ${isTacticalMapActive ? "Main Map" : "Tactical Map"}`);
     
     // Emit hook for other modules
     Hooks.callAll("toggleTacticalMap", scene, isTacticalMapActive ? "deactivate" : "activate");

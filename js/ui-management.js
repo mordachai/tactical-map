@@ -25,10 +25,15 @@ function addTacticalMapTabToSceneConfig() {
         
         // Re-initialize the tabs
         app._tabs[0].bind(html[0]);
+        updateGridControlsState(html, html.find("input[name='tacticalMapImage']").val());
         
         // Add event listener for image path changes
         html.find("input[name='tacticalMapImage']").on('change', function() {
+          // Update image preview
           updateImagePreview(html, $(this).val());
+          
+          // Enable/disable grid controls based on image presence
+          updateGridControlsState(html, $(this).val());
         });
         
         // Initialize file picker
@@ -43,6 +48,7 @@ function addTacticalMapTabToSceneConfig() {
             callback: path => {
               input.val(path);
               updateImagePreview(html, path);
+              updateGridControlsState(html, path);
             }
           });
           picker.browse();
@@ -271,6 +277,7 @@ function updateGridControlsState(html, imagePath) {
   const hasTacticalMap = !!imagePath;
   
   // Fields to disable/enable based on image presence
+  // Important: tacticalMapGridType should NOT be in this list
   const fields = [
     "tacticalMapGridSize",
     "tacticalMapGridScale.distance",
@@ -291,12 +298,25 @@ function updateGridControlsState(html, imagePath) {
     }
   });
   
+  // Grid Type should ALWAYS be enabled
+  html.find(`[name="tacticalMapGridType"]`).prop('disabled', false);
+  
   // Also handle the color picker
   const colorPicker = html.find('input[type="color"][data-edit="tacticalMapGridColor"]');
   if (hasTacticalMap) {
     colorPicker.prop('disabled', false);
   } else {
     colorPicker.prop('disabled', true);
+  }
+  
+  // Add special note for grid type
+  const gridTypeNotes = html.find('.form-group:has([name="tacticalMapGridType"]) .notes');
+  if (!gridTypeNotes.length) {
+    html.find('.form-group:has([name="tacticalMapGridType"])').append(
+      '<p class="notes grid-type-note">Grid Type can always be changed, even without a tactical map image.</p>'
+    );
+  } else {
+    gridTypeNotes.text('Grid Type can always be changed, even without a tactical map image.');
   }
   
   // Update notes text

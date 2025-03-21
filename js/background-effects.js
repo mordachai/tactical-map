@@ -13,12 +13,22 @@ export async function toggleBackgroundBlur(scene) {
     return false;
   }
   
-  // Only apply blur if there is no tactical map image set
-  const hasTacticalMap = scene.getFlag("tactical-map", "image");
-  if (hasTacticalMap) {
-    debugLog("Tactical map is set, not applying blur effect");
+  // Determine if we should be showing blur
+  const isTacticalMapActive = scene.getFlag("tactical-map", "isActive") || false;
+  const hasTacticalMapImage = scene.getFlag("tactical-map", "image") || false;
+  
+  // Blur should be active if tactical map is active AND there's no image
+  const shouldBlurBeActive = isTacticalMapActive && !hasTacticalMapImage;
+  
+  // Get current blur state
+  const isBlurActive = scene.getFlag("tactical-map", "blurActive") || false;
+  
+  // If no change needed, exit
+  if (shouldBlurBeActive === isBlurActive) {
     return false;
   }
+  
+  debugLog(`Toggle blur: Current=${isBlurActive}, Should be=${shouldBlurBeActive}`);
   
   // Find appropriate target for blur effect
   let target = null;
@@ -39,10 +49,8 @@ export async function toggleBackgroundBlur(scene) {
   // Use modern filter with appropriate fallback
   const BlurFilterClass = PIXI.filters.BlurFilterDeprecated || PIXI.filters.BlurFilter;
   
-  // Check if blur is currently active via the scene flag
-  const isBlurActive = scene.getFlag("tactical-map", "blurActive") || false;
-  
-  if (!isBlurActive) {
+  // If we need to activate blur
+  if (shouldBlurBeActive && !isBlurActive) {
     // ENABLE: Add blur filter with animation
     const blurFilter = new BlurFilterClass();
     // Start with no blur
@@ -67,7 +75,9 @@ export async function toggleBackgroundBlur(scene) {
     
     debugLog(`Background blur enabled with animated amount: ${blurAmount}`);
     return true;
-  } else {
+  } 
+  // If we need to deactivate blur
+  else if (!shouldBlurBeActive && isBlurActive) {
     // DISABLE: Remove blur filter with animation
     if (target.filters) {
       // Find the blur filter
@@ -152,9 +162,12 @@ function animateBlur(filter, startValue, endValue, duration = 500, callback = nu
 export function updateBlurAmount(scene, newAmount) {
   if (!canvas || !canvas.ready || !scene) return;
   
-  // Only update if no tactical map is set
+  // Check if tactical map is active without an image
+  const isTacticalMapActive = scene.getFlag("tactical-map", "isActive") || false;
   const hasTacticalMap = scene.getFlag("tactical-map", "image");
-  if (hasTacticalMap) return;
+  
+  // Only update if tactical map is active without an image
+  if (!(isTacticalMapActive && !hasTacticalMap)) return;
   
   // Find target
   let target = null;
@@ -179,4 +192,114 @@ export function updateBlurAmount(scene, newAmount) {
     
     debugLog(`Animated blur amount from ${currentAmount} to: ${newAmount}`);
   }
+}
+
+// Function to force apply blur effect
+export async function forceApplyBlur(scene) {
+  if (!canvas || !canvas.ready || !scene) {
+    console.error("Canvas or scene not ready");
+    return false;
+  }
+  
+  // Find appropriate target for blur effect
+  let target = null;
+  if (canvas.primary?.background) target = canvas.primary.background;
+  else if (canvas.scene?.background) target = canvas.scene.background;
+  else if (canvas.tiles?.background) target = canvas.tiles.background;
+  else if (canvas.environment) target = canvas.environment;
+  else if (canvas.stage) target = canvas.stage;
+  
+  if (!target) {
+    console.error("Could not find a valid background layer");
+    return false;
+  }
+  
+  // Get the blur amount from settings
+  const blurAmount = game.settings.get("tactical-map", "blurAmount");
+  
+  // Use modern filter with appropriate fallback
+  const BlurFilterClass = PIXI.filters.BlurFilterDeprecated || PIXI.filters.BlurFilter;
+  
+  // Initialize filters array if it doesn't exist
+  target.filters = target.filters || [];
+  
+  // Remove any existing blur filters first to avoid duplicates
+  target.filters = target.filters.filter(f => !(f instanceof BlurFilterClass));
+  
+  // Create new blur filter
+  const blurFilter = new BlurFilterClass();
+  blurFilter.blur = 0;
+  blurFilter.quality = 3;
+  
+  // Add the new blur filter
+  target.filters.push(blurFilter);
+  
+  // Set the flag to remember blur is active
+  await scene.setFlag("tactical-map", "blurActive", true);
+  
+  // Animate the blur from 0 to the target amount
+  animateBlur(blurFilter, 0, blurAmount, 500);
+  
+  debugLog(`Background blur FORCED with animated amount: ${blurAmount}`);
+  return true;
+}
+
+// Function to force remove blur effect
+export async function forceRemoveBlur(scene) {
+  if (!canvas || !canvas.ready || !scene) {
+    console.error("Canvas or scene not ready");
+    return false;
+  }
+  
+  // Find appropriate target for blur effect
+  let target = null;
+  if (canvas.primary?.background) target = canvas.primary.background;
+  else if (canvas.scene?.background) target = canvas.scene.background;
+  else if (canvas.tiles?.background) target = canvas.tiles.background;
+  else if (canvas.environment) target = canvas.environment;
+  else if (canvas.stage) target = canvas.stage;
+  
+  if (!target) {
+    console.error("Could not find a valid background layer");
+    return false;
+  }
+  
+  // Use modern filter with appropriate fallback
+  const BlurFilterClass = PIXI.filters.BlurFilterDeprecated || PIXI.filters.BlurFilter;
+  
+  // Check if target has filters
+  if (target.filters) {
+    // Find blur filter
+    const blurFilter = target.filters.find(f => f instanceof BlurFilterClass);
+    
+    if (blurFilter) {
+      // Get current blur amount
+      const currentBlur = blurFilter.blur;
+      
+      // Animate blur to 0
+      animateBlur(blurFilter, currentBlur, 0, 500, () => {
+        // After animation completes, remove the filter
+        if (target.filters) {
+          target.filters = target.filters.filter(f => !(f instanceof BlurFilterClass));
+          
+          if (target.filters.length === 0) {
+            target.filters = null;
+          }
+        }
+      });
+    } else {
+      // No blur filter found, just clean up
+      target.filters = target.filters.filter(f => !(f instanceof BlurFilterClass));
+      
+      if (target.filters.length === 0) {
+        target.filters = null;
+      }
+    }
+  }
+  
+  // Update flag
+  await scene.setFlag("tactical-map", "blurActive", false);
+  
+  debugLog("Background blur FORCED to disable with animation");
+  return true;
 }
