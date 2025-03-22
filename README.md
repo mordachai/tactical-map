@@ -4,7 +4,8 @@
 
 It's a quality of life module, especially if you are running a _Theater of the Mind_ game, but want to solve combats more tactically.
 
-Check it out in action: 
+Check it out in action:
+![image]()
 
 ## Features
 
