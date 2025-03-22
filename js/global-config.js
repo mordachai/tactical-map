@@ -28,27 +28,24 @@ Hooks.once('init', () => {
       }
     }
   });
-
-  // Setting for blur amount when no tactical map is set
-  game.settings.register("tactical-map", "blurAmount", {
-    name: "Background Blur Amount",
-    hint: "The amount of blur to apply to the scene background when no tactical map is set (5-30).",
-    scope: "world",
-    config: true,
-    type: Number,
-    default: 20,
-    range: {
-      min: 5,
-      max: 30,
-      step: 1
-    },
-    onChange: value => {
-      if (canvas.scene) {
-        // Import dynamically to avoid circular imports
-        import('./background-effects.js').then(module => {
-          module.updateBlurAmount(canvas.scene, value);
-        });
+  
+  // Set default blur amount for scenes that don't have it configured yet
+  Hooks.on("ready", async () => {
+    for (const scene of game.scenes) {
+      if (scene.getFlag("tactical-map", "isActive") !== undefined && 
+          scene.getFlag("tactical-map", "blurAmount") === undefined) {
+        await scene.setFlag("tactical-map", "blurAmount", 10);
       }
+    }
+    
+    // Import background-effects module to update any active scenes that have blur
+    if (canvas.ready && canvas.scene) {
+      import('./background-effects.js').then(module => {
+        if (canvas.scene.getFlag("tactical-map", "isActive") && 
+            !canvas.scene.getFlag("tactical-map", "image")) {
+          module.updateBlurAmount(canvas.scene, canvas.scene.getFlag("tactical-map", "blurAmount") || 10);
+        }
+      });
     }
   });
   
