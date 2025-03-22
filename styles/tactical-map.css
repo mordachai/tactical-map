@@ -1,0 +1,70 @@
+/* Tactical Map Styles */
+
+.tactical-map-settings-info .notification {
+    background-color: rgba(65, 105, 225, 0.1);
+    border-left: 3px solid #4169e1;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 3px;
+  }
+  
+  .tactical-map-settings-info .notification i {
+    color: #4169e1;
+    margin-right: 8px;
+    float: left;
+    font-size: 1.2em;
+  }
+  
+  .tactical-map-settings-info .notification p {
+    margin: 0 0 5px 25px;
+    color: #333;
+  }
+  
+  /* Loading overlay styles */
+  #tactical-map-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+  
+  #tactical-map-overlay .message {
+    color: white;
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+  
+  #tactical-map-overlay .spinner {
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #3498db;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 2s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .tm-title3 {
+    font-size: 1.5em !important;
+    margin: 0 0 10px;
+  }
+
+  .grid-settings-container {
+    display: flex;
+    gap: 20px;
+  }
+  
+  .grid-settings-container > div {
+    flex: 1;
+  }
