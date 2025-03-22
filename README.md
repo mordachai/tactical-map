@@ -5,7 +5,7 @@
 It's a quality of life module, especially if you are running a _Theater of the Mind_ game, but want to solve combats more tactically.
 
 Check it out in action:
-![image]()
+![image](https://github.com/mordachai/tactical-map/blob/eca06bbe848d84ed345aa19ecc70b078899febe9/TacticalMapUpdate_snapshot.png)
 
 ## Features
 
