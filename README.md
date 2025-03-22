@@ -4,54 +4,28 @@
 
 It's a quality of life module, especially if you are running a _Theater of the Mind_ game, but want to solve combats more tactically.
 
-Check it out in action: https://www.youtube.com/watch?v=oQfRU0lHkbE
+Check it out in action:
+[![YouTube video](https://raw.githubusercontent.com/mordachai/tactical-map/dev/TacticalMapUpdate_snapshot.png 'Tactical Map Update')](https://youtu.be/uN3BWyXhWwU?si=1Ow4EEkvnG0Vhi63)
 
 ## Features
 
 - Add a Tactical Map image to any scene via the Scene Configuration menu.
+- No tactical map image? Blur the background and start your combat right there!
 - Fast switch between the original scene and the tactical map, preserving zoom and position.
 - Use alternative token images for each type of map: top-down and isometric
 - Automatically adds tokens to a combat encounter when switching to the tactical map.
 - Preserve tokens positions and rotations independently.
-- Supports different grid types and sizes for both maps, sharing the same color, line type, and opacity configuration.
+- Supports different grid types and grid settings for both maps.
 
 ## Installation
 
-To install this module, follow these steps:
+In Foundry VTT, go to the Add-on Modules tab and click Install Module. Then:
 
-1. In Foundry VTT, go to the **Add-on Modules** tab
-2. Click **Install Module**
-3. Paste the following manifest URL into the bottom **Manifest URL** field: 
-https://raw.githubusercontent.com/mordachai/tactical-map/main/module.json
-
+- Search in the top bar for "mist hud" and click on the Install button of the module
 OR
+- Paste the following manifest URL into the bottom Manifest URL field: ```https://raw.githubusercontent.com/mordachai/tactical-map/main/module.json```
 
-Search in the top bar for "tactical map"
-
-4. Click **Install**
-5. Enable the module in your **Game Settings** under **Manage Modules**
-
-## Usage and Settings
-
-The following settings are available for configuration in the Scene Configuration menu:
-
-- **Tactical Map Image**: The image path for the Tactical Map
-- **Tactical Map Grid Type**: The type of grid to be used on the Tactical Map (Gridless, Square, 2x Hexagonal)
-- **Tactical Map Grid Size**: The size of the grid on the Tactical Map
-- **Tactical Map Type:** Top-down View and Isometric View. It is only important if you want to use alternative token images for each view. 
-- **Add Tokens to Encounter**: Automatically adds all scene tokens to a combat encounter when the Tactical Map is activated
-
-### Adding a Tactical Map
-
-1. Open the **Scene Configuration** for any scene.
-
-![image](https://github.com/user-attachments/assets/ef2d42d2-69a1-4b71-9592-40559256ca19)
-
-2. In the **Basics** tab locate the **Tactical Map** settings
-3. Provide the path to your Tactical Map image in the **Tactical Map Image** field
-4. Configure the grid type and size as needed, they can be different from the main scene, but will use the same color and line configuration
-5. Optionally, check **Add Tokens to Encounter** if you want all scene tokens to be added to a combat encounter when the tactical map is activated
-6. Save your scene
+After the installation enable the module in your Game Settings, under Manage Modules
 
 ### Alternative token images
 
