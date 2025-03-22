@@ -43,8 +43,8 @@ export async function toggleBackgroundBlur(scene) {
     return false;
   }
   
-  // Get the blur amount from settings
-  const blurAmount = game.settings.get("tactical-map", "blurAmount");
+  // Get the blur amount from scene flags
+  const blurAmount = scene.getFlag("tactical-map", "blurAmount") || 10;
   
   // Use modern filter with appropriate fallback
   const BlurFilterClass = PIXI.filters.BlurFilterDeprecated || PIXI.filters.BlurFilter;
@@ -214,8 +214,8 @@ export async function forceApplyBlur(scene) {
     return false;
   }
   
-  // Get the blur amount from settings
-  const blurAmount = game.settings.get("tactical-map", "blurAmount");
+  // Get the blur amount from scene flags
+  const blurAmount = scene.getFlag("tactical-map", "blurAmount") || 10;
   
   // Use modern filter with appropriate fallback
   const BlurFilterClass = PIXI.filters.BlurFilterDeprecated || PIXI.filters.BlurFilter;

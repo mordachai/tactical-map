@@ -56,12 +56,12 @@
   }
 
   .tm-title3 {
-    font-size: 1.5em !important;
-    margin: 0 0 10px;
+    font-size: 1.3em !important;
   }
 
   .grid-settings-container {
     display: flex;
+    align-items: first baseline;
     gap: 20px;
   }
   

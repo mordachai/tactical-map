@@ -128,20 +128,20 @@ function pixelToGridCoordinates(pixelX, pixelY, gridType, gridSize) {
     case GRID_TYPES.HEX_COL_EVEN:
       // For hex columns, the height is different from width
       const hexHeight = gridSize * 3/4;
-      gridX = Math.floor(pixelX / gridSize);
-      gridY = Math.floor(pixelY / hexHeight);
+      let colGridX = Math.floor(pixelX / gridSize);
+      let colGridY = Math.floor(pixelY / hexHeight);
       
       // Adjust for odd/even offset
-      const isOddCol = gridX % 2 === 1;
+      const isOddCol = colGridX % 2 === 1;
       const isOddColGrid = gridType === GRID_TYPES.HEX_COL_ODD;
       
       if ((isOddCol && isOddColGrid) || (!isOddCol && !isOddColGrid)) {
         // Offset is applied to this column
         const yOffset = hexHeight / 2;
-        gridY = Math.floor((pixelY - yOffset) / hexHeight);
+        colGridY = Math.floor((pixelY - yOffset) / hexHeight);
       }
       
-      return { gridX, gridY };
+      return { gridX: colGridX, gridY: colGridY };
       
     case GRID_TYPES.GRIDLESS:
     default:
@@ -174,8 +174,8 @@ function gridCoordinatesToPixel(gridX, gridY, gridType, gridSize) {
     case GRID_TYPES.HEX_ROW_EVEN:
       // For hex rows
       const hexWidth = gridSize * 3/4;
-      let pixelX = (gridX + 0.5) * hexWidth;
-      const pixelY = (gridY + 0.5) * gridSize;
+      let rowPixelX = (gridX + 0.5) * hexWidth;
+      const rowPixelY = (gridY + 0.5) * gridSize;
       
       // Adjust for odd/even offset
       const isOddRow = gridY % 2 === 1;
@@ -183,17 +183,17 @@ function gridCoordinatesToPixel(gridX, gridY, gridType, gridSize) {
       
       if ((isOddRow && isOddRowGrid) || (!isOddRow && !isOddRowGrid)) {
         // Add offset for this row
-        pixelX += hexWidth / 2;
+        rowPixelX += hexWidth / 2;
       }
       
-      return { pixelX, pixelY };
+      return { pixelX: rowPixelX, pixelY: rowPixelY };
       
     case GRID_TYPES.HEX_COL_ODD:
     case GRID_TYPES.HEX_COL_EVEN:
       // For hex columns
       const hexHeight = gridSize * 3/4;
-      const pixelX = (gridX + 0.5) * gridSize;
-      let pixelY = (gridY + 0.5) * hexHeight;
+      const colPixelX = (gridX + 0.5) * gridSize;
+      let colPixelY = (gridY + 0.5) * hexHeight;
       
       // Adjust for odd/even offset
       const isOddCol = gridX % 2 === 1;
@@ -201,10 +201,10 @@ function gridCoordinatesToPixel(gridX, gridY, gridType, gridSize) {
       
       if ((isOddCol && isOddColGrid) || (!isOddCol && !isOddColGrid)) {
         // Add offset for this column
-        pixelY += hexHeight / 2;
+        colPixelY += hexHeight / 2;
       }
       
-      return { pixelX, pixelY };
+      return { pixelX: colPixelX, pixelY: colPixelY };
       
     case GRID_TYPES.GRIDLESS:
     default:

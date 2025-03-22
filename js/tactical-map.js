@@ -4,8 +4,6 @@ import { debugLog } from './logger-tcmap.js';
 import { isV13OrLater } from './compatibility.js';
 import { toggleBackgroundBlur, forceApplyBlur, forceRemoveBlur } from './background-effects.js';
 
-
-
 /**
  * Stores the current canvas view position and zoom
  * @param {Scene} scene - The scene
@@ -228,7 +226,11 @@ async function activateTacticalMap(scene) {
       width: scene.width,
       height: scene.height,
       gridType: scene.grid.type,
-      gridSize: scene.grid.size
+      gridSize: scene.grid.size,
+      gridColor: scene.grid.color,
+      gridAlpha: scene.grid.alpha,
+      gridStyle: scene.grid.style,
+      gridThickness: scene.grid.thickness
     });
 
     debugLog("Original settings stored");
@@ -237,14 +239,37 @@ async function activateTacticalMap(scene) {
       // Load image dimensions first
       const imgDimensions = await loadImagePromise(tacticalMapImage);
       
-      // Update scene with new settings
+      // Get tactical map grid settings
+      const gridType = scene.getFlag("tactical-map", "gridType") || 1;
+      const gridSize = scene.getFlag("tactical-map", "gridSize") || 100;
+      
+      // Get grid styling settings if they exist
+      const gridColor = scene.getFlag("tactical-map", "gridColor");
+      const gridAlpha = scene.getFlag("tactical-map", "gridAlpha");
+      const gridStyle = scene.getFlag("tactical-map", "gridStyle");
+      const gridThickness = scene.getFlag("tactical-map", "gridThickness");
+      
+      // Prepare updates object
       const updates = {
         "background.src": tacticalMapImage,
         width: imgDimensions.width,
         height: imgDimensions.height,
-        "grid.type": scene.getFlag("tactical-map", "gridType") || 1,
-        "grid.size": scene.getFlag("tactical-map", "gridSize") || 100
+        "grid.type": gridType,
+        "grid.size": gridSize
       };
+      
+      // Add optional grid styling if they exist
+      if (gridColor) updates["grid.color"] = gridColor;
+      if (gridAlpha !== undefined) updates["grid.alpha"] = gridAlpha;
+      if (gridStyle) updates["grid.style"] = gridStyle;
+      if (gridThickness !== undefined) updates["grid.thickness"] = gridThickness;
+      
+      // Save scale settings if they exist
+      const gridScale = scene.getFlag("tactical-map", "gridScale");
+      if (gridScale) {
+        if (gridScale.distance) updates["grid.distance"] = gridScale.distance;
+        if (gridScale.units) updates["grid.units"] = gridScale.units;
+      }
 
       await scene.update(updates);
       await scene.setFlag("tactical-map", "isActive", true);
@@ -313,7 +338,11 @@ async function restoreOriginalMap(scene) {
       width: originalSettings.width,
       height: originalSettings.height,
       "grid.type": originalSettings.gridType,
-      "grid.size": originalSettings.gridSize
+      "grid.size": originalSettings.gridSize,
+      "grid.color": originalSettings.gridColor,
+      "grid.alpha": originalSettings.gridAlpha,
+      "grid.style": originalSettings.gridStyle,
+      "grid.thickness": originalSettings.gridThickness
     };
 
     await scene.update(updates);

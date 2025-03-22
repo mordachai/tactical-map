@@ -21,8 +21,8 @@
     <p class="notes">Token type to use: "token_tdv" to Top-down and "token_isv" to Isometric.</p>
   </div>
 
-    <hr>
-
+  <hr>
+  
   <div class="form-group">
     <label><i class="fas fa-swords"></i> Auto Add Tokens to Encounter</label>
     <div class="form-fields">
@@ -32,36 +32,40 @@
   </div>
 
   <hr>
-  <h3>Grid Settings</h3>
 
-  <div class="form-group">
-    <label>Grid Type</label>
-    <div class="form-fields">
-      <select name="tacticalMapGridType">
-        {{#each gridTypeOptions}}
-          <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.text}}</option>
-        {{/each}}
-      </select>
+  <div class="tm-title3">Tactical Map Grid Settings:</div>
+  {{#unless hasTacticalMap}}
+  <p class="notes">Set the grid type and blur amount. Add a tactical map image to access other grid settings.</p>
+  {{/unless}}
+
+  <div class="grid-settings-container">
+    <div class="form-group">
+      <label>Grid Type</label>
+      <div class="form-fields">
+        <select name="tacticalMapGridType">
+          {{#each gridTypeOptions}}
+            <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.text}}</option>
+          {{/each}}
+        </select>
+      </div>
     </div>
-    <p class="notes">Select the grid type to use.</p>
+    
+
+    <div class="form-group"
+     {{#if hasTacticalMap}} style="display: none;"{{/if}}>
+      <label>Background Blur</label>
+      <div class="form-fields">
+        <input type="range" name="blurAmount" value="{{blurAmount}}" min="0" max="30" step="1">
+        <span class="range-value">{{blurAmount}}</span>
+      </div>
+      <p class="notes">Blur when no tactical map image is set.</p>
+    </div>
   </div>
+
 
   <hr>
 
-  {{#unless hasTacticalMap}}
-    <div class="form-group tactical-map-settings-info">
-      <div class="notification info">
-        {{!-- <i class="fas fa-info-circle"></i> --}}
-        <p>No Tactical Map image set.</p>
-        <ul>
-          <li>Scene will be blurred</li>
-          <li>Set the grid you want above</li>
-          <li>All other grid setings are from the main scene</li>
-        </ul>
-        <p>Set a tactical map image to choose other grid settings.</p>
-      </div>
-    </div>
-  {{else}}
+  {{#if hasTacticalMap}}
     <div class="grid-settings-container">
       <div>
         <div class="form-group">
@@ -117,12 +121,11 @@
         </div>
       </div>
     </div>
-  {{/unless}}
 
+    <hr>
   
-  {{#if hasTacticalMap}}
     <div class="form-group">
-      <label>Preview</label>
+      <label>Preview:</label>
       <div class="preview-image">
         <img src="{{tacticalMapImage}}" style="max-width: 250px; max-height: 200px; object-fit: contain;">
       </div>
