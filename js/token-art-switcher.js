@@ -12,9 +12,17 @@ Hooks.once('ready', () => {
 export async function switchTokenArt(scene, action) {
   debugLog(`Switching token art due to Tactical Map ${action}`);
 
-  const useAlternativeTokenArt = game.settings.get("tactical-map", "useAlternativeTokenArt");
+  // Check if setting is registered first
+  let useAlternativeTokenArt = false;
+  try {
+    useAlternativeTokenArt = game.settings.get("tactical-map", "useAlternativeTokenArt");
+  } catch (error) {
+    debugLog("useAlternativeTokenArt setting not registered yet");
+    return; // Exit if setting isn't available
+  }
+  
   debugLog("Use Alternative Token Art Setting:", useAlternativeTokenArt);
-
+  
   if (!useAlternativeTokenArt) {
     debugLog("Alternative token art setting is disabled.");
     return;
