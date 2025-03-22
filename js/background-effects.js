@@ -198,7 +198,23 @@ export function updateBlurAmount(scene, newAmount) {
 export async function forceApplyBlur(scene) {
   if (!canvas || !canvas.ready || !scene) {
     console.error("Canvas or scene not ready");
-    return false;
+    return new Promise((resolve) => {
+      // Wait for canvas to be ready
+      const checkCanvas = () => {
+        if (canvas && canvas.ready && scene) {
+          // Canvas is ready, apply blur and resolve
+          forceApplyBlur(scene).then(resolve);
+        } else if (game.canvas) {
+          // Try again in 100ms
+          setTimeout(checkCanvas, 100);
+        } else {
+          // Give up after too many attempts
+          console.error("Could not apply blur - canvas never ready");
+          resolve(false);
+        }
+      };
+      setTimeout(checkCanvas, 100);
+    });
   }
   
   // Find appropriate target for blur effect
@@ -248,7 +264,23 @@ export async function forceApplyBlur(scene) {
 export async function forceRemoveBlur(scene) {
   if (!canvas || !canvas.ready || !scene) {
     console.error("Canvas or scene not ready");
-    return false;
+    return new Promise((resolve) => {
+      // Wait for canvas to be ready
+      const checkCanvas = () => {
+        if (canvas && canvas.ready && scene) {
+          // Canvas is ready, apply blur and resolve
+          forceRemoveBlur(scene).then(resolve);
+        } else if (game.canvas) {
+          // Try again in 100ms
+          setTimeout(checkCanvas, 100);
+        } else {
+          // Give up after too many attempts
+          console.error("Could not apply blur - canvas never ready");
+          resolve(false);
+        }
+      };
+      setTimeout(checkCanvas, 100);
+    });
   }
   
   // Find appropriate target for blur effect
