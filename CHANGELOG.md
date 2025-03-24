@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.3] - 2025-03-24
+- **Fixed error on remove blur**: fixed error message on remove blur function.
+
+## [2.3.0] - 2025-03-20
+- **New tab on scene configuration panel**: moved all tactical map setting to it own tab in the scene configuration menu.
+- **Blur background**: Keeps the image in the background adding a grid and blur effect whn no tactical map is set
+
 ## [2.1.0] - 2025-03-18
 - **Can work with v.13**: added verification of version and can technically work with v.12 and v13 (tested in v.12).
 - **Fixed Tactical Map Positioning**: keep the map in the last position it was focused on the screen when switching maps.
