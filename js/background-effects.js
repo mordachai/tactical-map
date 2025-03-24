@@ -197,19 +197,22 @@ export function updateBlurAmount(scene, newAmount) {
 // Function to force apply blur effect
 export async function forceApplyBlur(scene) {
   if (!canvas || !canvas.ready || !scene) {
-    console.error("Canvas or scene not ready");
+    console.log("Canvas or scene not ready for blur application, initiating wait sequence");
     return new Promise((resolve) => {
-      // Wait for canvas to be ready
+      let attempts = 0;
+      const maxAttempts = 20; // Limit retry attempts (2 seconds total with 100ms intervals)
+      
       const checkCanvas = () => {
+        attempts++;
         if (canvas && canvas.ready && scene) {
-          // Canvas is ready, apply blur and resolve
+          console.log("Canvas now ready, proceeding with blur application");
           forceApplyBlur(scene).then(resolve);
-        } else if (game.canvas) {
+        } else if (attempts < maxAttempts) {
           // Try again in 100ms
           setTimeout(checkCanvas, 100);
         } else {
           // Give up after too many attempts
-          console.error("Could not apply blur - canvas never ready");
+          console.warn("Could not apply blur - canvas never ready after multiple attempts");
           resolve(false);
         }
       };
@@ -226,7 +229,7 @@ export async function forceApplyBlur(scene) {
   else if (canvas.stage) target = canvas.stage;
   
   if (!target) {
-    console.error("Could not find a valid background layer");
+    console.error("Could not find a valid background layer for blur application");
     return false;
   }
   
@@ -251,31 +254,40 @@ export async function forceApplyBlur(scene) {
   target.filters.push(blurFilter);
   
   // Set the flag to remember blur is active
-  await scene.setFlag("tactical-map", "blurActive", true);
+  try {
+    await scene.setFlag("tactical-map", "blurActive", true);
+  } catch (error) {
+    console.error("Error setting blur active flag:", error);
+    // Continue anyway so at least the visual effect is applied
+  }
   
   // Animate the blur from 0 to the target amount
-  animateBlur(blurFilter, 0, blurAmount, 500);
-  
-  debugLog(`Background blur FORCED with animated amount: ${blurAmount}`);
-  return true;
+  return new Promise((resolve) => {
+    animateBlur(blurFilter, 0, blurAmount, 500, () => {
+      debugLog(`Background blur FORCED with animated amount: ${blurAmount}`);
+      resolve(true);
+    });
+  });
 }
 
-// Function to force remove blur effect
 export async function forceRemoveBlur(scene) {
   if (!canvas || !canvas.ready || !scene) {
-    console.error("Canvas or scene not ready");
+    console.log("Canvas or scene not ready for blur removal, initiating wait sequence");
     return new Promise((resolve) => {
-      // Wait for canvas to be ready
+      let attempts = 0;
+      const maxAttempts = 20; // Limit retry attempts (2 seconds total with 100ms intervals)
+      
       const checkCanvas = () => {
+        attempts++;
         if (canvas && canvas.ready && scene) {
-          // Canvas is ready, apply blur and resolve
+          console.log("Canvas now ready, proceeding with blur removal");
           forceRemoveBlur(scene).then(resolve);
-        } else if (game.canvas) {
+        } else if (attempts < maxAttempts) {
           // Try again in 100ms
           setTimeout(checkCanvas, 100);
         } else {
           // Give up after too many attempts
-          console.error("Could not apply blur - canvas never ready");
+          console.warn("Could not remove blur - canvas never ready after multiple attempts");
           resolve(false);
         }
       };
@@ -292,7 +304,7 @@ export async function forceRemoveBlur(scene) {
   else if (canvas.stage) target = canvas.stage;
   
   if (!target) {
-    console.error("Could not find a valid background layer");
+    console.error("Could not find a valid background layer for blur removal");
     return false;
   }
   
@@ -309,15 +321,28 @@ export async function forceRemoveBlur(scene) {
       const currentBlur = blurFilter.blur;
       
       // Animate blur to 0
-      animateBlur(blurFilter, currentBlur, 0, 500, () => {
-        // After animation completes, remove the filter
-        if (target.filters) {
-          target.filters = target.filters.filter(f => !(f instanceof BlurFilterClass));
-          
-          if (target.filters.length === 0) {
-            target.filters = null;
+      return new Promise((resolve) => {
+        animateBlur(blurFilter, currentBlur, 0, 500, () => {
+          // After animation completes, remove the filter
+          if (target.filters) {
+            target.filters = target.filters.filter(f => !(f instanceof BlurFilterClass));
+            
+            if (target.filters.length === 0) {
+              target.filters = null;
+            }
           }
-        }
+          
+          // Update flag
+          scene.setFlag("tactical-map", "blurActive", false)
+            .then(() => {
+              debugLog("Background blur FORCED to disable with animation");
+              resolve(true);
+            })
+            .catch(error => {
+              console.error("Error updating blur flag:", error);
+              resolve(false);
+            });
+        });
       });
     } else {
       // No blur filter found, just clean up
@@ -326,12 +351,28 @@ export async function forceRemoveBlur(scene) {
       if (target.filters.length === 0) {
         target.filters = null;
       }
+      
+      // Update flag
+      return scene.setFlag("tactical-map", "blurActive", false)
+        .then(() => {
+          debugLog("Background blur flag cleared (no blur filter found)");
+          return true;
+        })
+        .catch(error => {
+          console.error("Error updating blur flag:", error);
+          return false;
+        });
     }
   }
   
-  // Update flag
-  await scene.setFlag("tactical-map", "blurActive", false);
-  
-  debugLog("Background blur FORCED to disable with animation");
-  return true;
+  // No filters at all, just update the flag
+  return scene.setFlag("tactical-map", "blurActive", false)
+    .then(() => {
+      debugLog("Background blur flag cleared (no filters found)");
+      return true;
+    })
+    .catch(error => {
+      console.error("Error updating blur flag:", error);
+      return false;
+    });
 }

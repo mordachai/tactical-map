@@ -142,12 +142,14 @@ export async function toggleTacticalMap() {
         // Restore tokens
         await restoreTokenPositions(scene, "originalTokenPositions");
         
-        // Remove blur filter
+        // Remove blur filter - with improved error handling
         try {
-          // Remove blur
-          await forceRemoveBlur(scene);
+          debugLog("Attempting to remove blur effect");
+          const blurRemoved = await forceRemoveBlur(scene);
+          debugLog(`Blur removal ${blurRemoved ? "succeeded" : "failed"}`);
         } catch (error) {
-          console.error("Error removing blur:", error);
+          console.error("Error during blur removal:", error);
+          // Continue with other operations even if blur removal fails
         }
         
         // AFTER all changes, restore previous view position
@@ -173,13 +175,14 @@ export async function toggleTacticalMap() {
         // Restore tokens 
         await restoreTokenPositions(scene, "tacticalTokenPositions");
         
-        // Apply blur
+        // Apply blur - with improved error handling
         try {
-          // Apply blur
-          await forceApplyBlur(scene);
+          debugLog("Attempting to apply blur effect");
+          const blurApplied = await forceApplyBlur(scene);
+          debugLog(`Blur application ${blurApplied ? "succeeded" : "failed"}`);
         } catch (error) {
-          console.error("Error applying blur:", error);
-          // Continue with other operations
+          console.error("Error during blur application:", error);
+          // Continue with other operations even if blur application fails
         }
         
         // Add tokens to combat if enabled
