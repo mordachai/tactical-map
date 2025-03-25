@@ -24,8 +24,14 @@ async function storeCanvasPosition(scene, baseFlag) {
       zoom: positionData.zoom.toFixed(2)
     });
     
-    // Store in scene flags
-    await scene.setFlag("tactical-map", baseFlag, positionData);
+    // If user is GM, store in scene flags, otherwise store in user settings
+    if (game.user.isGM) {
+      await scene.setFlag("tactical-map", baseFlag, positionData);
+    } else {
+      // Store in user settings with scene-specific key
+      const userKey = `${baseFlag}_${scene.id}`;
+      await game.user.setFlag("tactical-map", userKey, positionData);
+    }
     return true;
   } catch (error) {
     console.error(`Error storing canvas position for ${baseFlag}:`, error);
@@ -35,8 +41,14 @@ async function storeCanvasPosition(scene, baseFlag) {
 
 async function restoreCanvasPosition(scene, baseFlag) {
   try {
-    // Get position directly from scene flags
-    const position = scene.getFlag("tactical-map", baseFlag);
+    let position;
+    // If user is GM, get from scene flags, otherwise get from user settings
+    if (game.user.isGM) {
+      position = scene.getFlag("tactical-map", baseFlag);
+    } else {
+      const userKey = `${baseFlag}_${scene.id}`;
+      position = game.user.getFlag("tactical-map", userKey);
+    }
     
     if (position) {
       debugLog(`Restoring position for ${baseFlag}:`, {
@@ -98,6 +110,9 @@ function centerMap(scene) {
   });
 }
 
+// Add a flag to track if blur is being applied
+let isApplyingBlur = false;
+
 export async function toggleTacticalMap() {
   const scene = game.scenes.active;
 
@@ -110,7 +125,11 @@ export async function toggleTacticalMap() {
   if (toggleButton) toggleButton.disabled = true;
   
   try {
-    const isTacticalMapActive = scene.getFlag("tactical-map", "isActive");
+    // Get active state from appropriate source based on user role
+    const isTacticalMapActive = game.user.isGM 
+      ? scene.getFlag("tactical-map", "isActive")
+      : game.user.getFlag("tactical-map", `isActive_${scene.id}`);
+
     const currentMap = isTacticalMapActive ? "Tactical Map" : "Main Map";
     const currentFlag = isTacticalMapActive ? "tacticalMapPosition" : "mainMapPosition";
     const targetFlag = isTacticalMapActive ? "mainMapPosition" : "tacticalMapPosition";
@@ -127,20 +146,26 @@ export async function toggleTacticalMap() {
     if (!tacticalMapImage) {
       // No image tactical map toggle
       if (isTacticalMapActive) {
-        // Store token positions
-        await storeTokenPositions(scene, "tacticalTokenPositions");
-        
-        // Get and apply original settings
-        const originalSettings = scene.getFlag("tactical-map", "originalSettings");
-        if (originalSettings && originalSettings.gridType !== undefined) {
-          await scene.update({ "grid.type": originalSettings.gridType });
+        // Only handle grid and token operations for GMs
+        if (game.user.isGM) {
+          // Store token positions
+          await storeTokenPositions(scene, "tacticalTokenPositions");
+          
+          // Get and apply original settings
+          const originalSettings = scene.getFlag("tactical-map", "originalSettings");
+          if (originalSettings && originalSettings.gridType !== undefined) {
+            await scene.update({ "grid.type": originalSettings.gridType });
+          }
+          
+          // Set inactive flag
+          await scene.unsetFlag("tactical-map", "isActive");
+          
+          // Restore tokens
+          await restoreTokenPositions(scene, "originalTokenPositions");
+        } else {
+          // For players, just update their local state
+          await game.user.setFlag("tactical-map", `isActive_${scene.id}`, false);
         }
-        
-        // Set inactive flag BEFORE removing blur
-        await scene.unsetFlag("tactical-map", "isActive");
-        
-        // Restore tokens
-        await restoreTokenPositions(scene, "originalTokenPositions");
         
         // Remove blur filter - with improved error handling
         try {
@@ -156,48 +181,89 @@ export async function toggleTacticalMap() {
         await restoreCanvasPosition(scene, targetFlag);
       } else {
         // Activating without image
-        // Store original grid type
-        const originalGridType = scene.grid.type;
-        await scene.setFlag("tactical-map", "originalSettings", {
-          gridType: originalGridType
-        });
-        
-        // Store token positions
-        await storeTokenPositions(scene, "originalTokenPositions");
-        
-        // Update grid type
-        const tacticalGridType = scene.getFlag("tactical-map", "gridType") || 1;
-        await scene.update({ "grid.type": tacticalGridType });
-        
-        // Set active flag BEFORE adding blur
-        await scene.setFlag("tactical-map", "isActive", true);
-        
-        // Restore tokens 
-        await restoreTokenPositions(scene, "tacticalTokenPositions");
+        if (game.user.isGM) {
+          // Store original grid type
+          const originalGridType = scene.grid.type;
+          await scene.setFlag("tactical-map", "originalSettings", {
+            gridType: originalGridType
+          });
+          
+          // Store token positions
+          await storeTokenPositions(scene, "originalTokenPositions");
+          
+          // Update grid type
+          const tacticalGridType = scene.getFlag("tactical-map", "gridType") || 1;
+          await scene.update({ "grid.type": tacticalGridType });
+          
+          // Set active flag
+          await scene.setFlag("tactical-map", "isActive", true);
+          
+          // Restore tokens 
+          await restoreTokenPositions(scene, "tacticalTokenPositions");
+        } else {
+          // For players, just update their local state
+          await game.user.setFlag("tactical-map", `isActive_${scene.id}`, true);
+        }
         
         // Apply blur - with improved error handling
         try {
-          debugLog("Attempting to apply blur effect");
-          const blurApplied = await forceApplyBlur(scene);
-          debugLog(`Blur application ${blurApplied ? "succeeded" : "failed"}`);
+          if (!isApplyingBlur) {
+            isApplyingBlur = true;
+            debugLog("Attempting to apply blur effect");
+            
+            // Ensure canvas is ready before applying blur
+            if (!canvas.ready) {
+              await new Promise(resolve => {
+                const checkCanvas = () => {
+                  if (canvas.ready) {
+                    resolve();
+                  } else {
+                    setTimeout(checkCanvas, 100);
+                  }
+                };
+                checkCanvas();
+              });
+            }
+            
+            // Find appropriate target for blur effect
+            let target = null;
+            if (canvas.primary?.background) target = canvas.primary.background;
+            else if (canvas.scene?.background) target = canvas.scene.background;
+            else if (canvas.tiles?.background) target = canvas.tiles.background;
+            else if (canvas.environment) target = canvas.environment;
+            else if (canvas.stage) target = canvas.stage;
+            
+            if (!target) {
+              console.error("Could not find a valid background layer for blur application");
+              return;
+            }
+            
+            // Now apply the blur
+            const blurApplied = await forceApplyBlur(scene);
+            debugLog(`Blur application ${blurApplied ? "succeeded" : "failed"}`);
+            isApplyingBlur = false;
+          }
         } catch (error) {
           console.error("Error during blur application:", error);
+          isApplyingBlur = false;
           // Continue with other operations even if blur application fails
         }
         
-        // Add tokens to combat if enabled
-        if (scene.getFlag("tactical-map", "addTokensToEncounter")) {
+        // Add tokens to combat if enabled (GM only)
+        if (game.user.isGM && scene.getFlag("tactical-map", "addTokensToEncounter")) {
           await ensureCombatEncounter(scene);
         }
         
-        // AFTER all changes, restore previous tactical view
+        // AFTER all changes, restore previous view position
         await restoreCanvasPosition(scene, targetFlag);
       }
     } else {
       // With tactical map image
       if (isTacticalMapActive) {
-        // Store token positions
-        await storeTokenPositions(scene, "tacticalTokenPositions");
+        // Store token positions (GM only)
+        if (game.user.isGM) {
+          await storeTokenPositions(scene, "tacticalTokenPositions");
+        }
         
         // Restore original map
         const restored = await restoreOriginalMap(scene, targetFlag);
@@ -206,12 +272,19 @@ export async function toggleTacticalMap() {
           return;
         }
         
-        // Restore tokens and art
-        await restoreTokenPositions(scene, "originalTokenPositions");
-        await switchTokenArt(scene, "deactivate");
+        // Restore tokens and art (GM only)
+        if (game.user.isGM) {
+          await restoreTokenPositions(scene, "originalTokenPositions");
+          await switchTokenArt(scene, "deactivate");
+        } else {
+          // For players, just update their local state
+          await game.user.setFlag("tactical-map", `isActive_${scene.id}`, false);
+        }
       } else {
-        // Store token positions
-        await storeTokenPositions(scene, "originalTokenPositions");
+        // Store token positions (GM only)
+        if (game.user.isGM) {
+          await storeTokenPositions(scene, "originalTokenPositions");
+        }
         
         // Activate tactical map
         const activated = await activateTacticalMap(scene, targetFlag);
@@ -220,9 +293,14 @@ export async function toggleTacticalMap() {
           return;
         }
         
-        // Restore tokens and art
-        await restoreTokenPositions(scene, "tacticalTokenPositions");
-        await switchTokenArt(scene, "activate");
+        // Restore tokens and art (GM only)
+        if (game.user.isGM) {
+          await restoreTokenPositions(scene, "tacticalTokenPositions");
+          await switchTokenArt(scene, "activate");
+        } else {
+          // For players, just update their local state
+          await game.user.setFlag("tactical-map", `isActive_${scene.id}`, true);
+        }
       }
     }
     

@@ -14,17 +14,30 @@ export async function toggleBackgroundBlur(scene) {
   }
   
   // Determine if we should be showing blur
-  const isTacticalMapActive = scene.getFlag("tactical-map", "isActive") || false;
+  const isTacticalMapActive = game.user.isGM 
+    ? scene.getFlag("tactical-map", "isActive")
+    : game.user.getFlag("tactical-map", `isActive_${scene.id}`);
   const hasTacticalMapImage = scene.getFlag("tactical-map", "image") || false;
   
   // Blur should be active if tactical map is active AND there's no image
   const shouldBlurBeActive = isTacticalMapActive && !hasTacticalMapImage;
   
-  // Get current blur state
-  const isBlurActive = scene.getFlag("tactical-map", "blurActive") || false;
+  // Get current blur state from client-side storage
+  const isBlurActive = game.user.getFlag("tactical-map", `blurActive_${scene.id}`) || false;
+  
+  // Debug logging
+  console.log("Blur Effect Debug:", {
+    isGM: game.user.isGM,
+    isTacticalMapActive,
+    hasTacticalMapImage,
+    shouldBlurBeActive,
+    isBlurActive,
+    sceneId: scene.id
+  });
   
   // If no change needed, exit
   if (shouldBlurBeActive === isBlurActive) {
+    console.log("No blur state change needed");
     return false;
   }
   
@@ -43,14 +56,22 @@ export async function toggleBackgroundBlur(scene) {
     return false;
   }
   
-  // Get the blur amount from scene flags
-  const blurAmount = scene.getFlag("tactical-map", "blurAmount") || 10;
+  // Debug log target
+  console.log("Blur target:", {
+    targetType: target.constructor.name,
+    hasFilters: !!target.filters,
+    currentFilters: target.filters ? target.filters.map(f => f.constructor.name) : []
+  });
+  
+  // Get the blur amount from client-side storage
+  const blurAmount = game.user.getFlag("tactical-map", `blurAmount_${scene.id}`) || 10;
   
   // Use modern filter with appropriate fallback
   const BlurFilterClass = PIXI.filters.BlurFilterDeprecated || PIXI.filters.BlurFilter;
   
   // If we need to activate blur
   if (shouldBlurBeActive && !isBlurActive) {
+    console.log("Activating blur effect");
     // ENABLE: Add blur filter with animation
     const blurFilter = new BlurFilterClass();
     // Start with no blur
@@ -67,8 +88,13 @@ export async function toggleBackgroundBlur(scene) {
     // Add the new blur filter
     target.filters.push(blurFilter);
     
-    // Set the flag to remember blur is active
-    await scene.setFlag("tactical-map", "blurActive", true);
+    // Set the flag in client-side storage
+    try {
+      await game.user.setFlag("tactical-map", `blurActive_${scene.id}`, true);
+      console.log("Successfully set blur active flag");
+    } catch (error) {
+      console.error("Error setting blur active flag:", error);
+    }
     
     // Animate the blur from 0 to the target amount
     animateBlur(blurFilter, 0, blurAmount, 500);
@@ -78,6 +104,7 @@ export async function toggleBackgroundBlur(scene) {
   } 
   // If we need to deactivate blur
   else if (!shouldBlurBeActive && isBlurActive) {
+    console.log("Deactivating blur effect");
     // DISABLE: Remove blur filter with animation
     if (target.filters) {
       // Find the blur filter
@@ -105,8 +132,13 @@ export async function toggleBackgroundBlur(scene) {
         }
       }
       
-      // Update flag
-      await scene.setFlag("tactical-map", "blurActive", false);
+      // Update flag in client-side storage
+      try {
+        await game.user.setFlag("tactical-map", `blurActive_${scene.id}`, false);
+        console.log("Successfully set blur inactive flag");
+      } catch (error) {
+        console.error("Error setting blur inactive flag:", error);
+      }
       
       debugLog("Background blur disabled with animation");
       return true;
@@ -190,6 +222,9 @@ export function updateBlurAmount(scene, newAmount) {
     // Animate to new amount
     animateBlur(blurFilter, currentAmount, newAmount, 500);
     
+    // Store new amount in client-side storage
+    game.user.setFlag("tactical-map", `blurAmount_${scene.id}`, newAmount);
+    
     debugLog(`Animated blur amount from ${currentAmount} to: ${newAmount}`);
   }
 }
@@ -216,58 +251,62 @@ export async function forceApplyBlur(scene) {
           resolve(false);
         }
       };
-      setTimeout(checkCanvas, 100);
+      
+      checkCanvas();
     });
   }
-  
-  // Find appropriate target for blur effect
-  let target = null;
-  if (canvas.primary?.background) target = canvas.primary.background;
-  else if (canvas.scene?.background) target = canvas.scene.background;
-  else if (canvas.tiles?.background) target = canvas.tiles.background;
-  else if (canvas.environment) target = canvas.environment;
-  else if (canvas.stage) target = canvas.stage;
-  
-  if (!target) {
-    console.error("Could not find a valid background layer for blur application");
+
+  try {
+    // Find appropriate target for blur effect
+    let target = null;
+    if (canvas.primary?.background) target = canvas.primary.background;
+    else if (canvas.scene?.background) target = canvas.scene.background;
+    else if (canvas.tiles?.background) target = canvas.tiles.background;
+    else if (canvas.environment) target = canvas.environment;
+    else if (canvas.stage) target = canvas.stage;
+    
+    if (!target) {
+      console.error("Could not find a valid background layer for blur application");
+      return false;
+    }
+
+    // Get the blur amount from client-side storage
+    const blurAmount = game.user.getFlag("tactical-map", `blurAmount_${scene.id}`) || 10;
+    
+    // Use modern filter with appropriate fallback
+    const BlurFilterClass = PIXI.filters.BlurFilterDeprecated || PIXI.filters.BlurFilter;
+    
+    // Create and configure blur filter
+    const blurFilter = new BlurFilterClass();
+    blurFilter.blur = 0;
+    blurFilter.quality = 3;
+    
+    // Remove any existing blur filters
+    if (target.filters) {
+      target.filters = target.filters.filter(f => !(f instanceof BlurFilterClass));
+    }
+    
+    // Add the new blur filter
+    target.filters = target.filters || [];
+    target.filters.push(blurFilter);
+    
+    // Set the flag in client-side storage for both GM and players
+    try {
+      await game.user.setFlag("tactical-map", `blurActive_${scene.id}`, true);
+      console.log("Successfully set blur active flag");
+    } catch (error) {
+      console.error("Error setting blur active flag:", error);
+    }
+    
+    // Animate the blur from 0 to the target amount
+    animateBlur(blurFilter, 0, blurAmount, 500);
+    
+    debugLog(`Background blur FORCED with animated amount: ${blurAmount}`);
+    return true;
+  } catch (error) {
+    console.error("Error applying blur effect:", error);
     return false;
   }
-  
-  // Get the blur amount from scene flags
-  const blurAmount = scene.getFlag("tactical-map", "blurAmount") || 10;
-  
-  // Use modern filter with appropriate fallback
-  const BlurFilterClass = PIXI.filters.BlurFilterDeprecated || PIXI.filters.BlurFilter;
-  
-  // Initialize filters array if it doesn't exist
-  target.filters = target.filters || [];
-  
-  // Remove any existing blur filters first to avoid duplicates
-  target.filters = target.filters.filter(f => !(f instanceof BlurFilterClass));
-  
-  // Create new blur filter
-  const blurFilter = new BlurFilterClass();
-  blurFilter.blur = 0;
-  blurFilter.quality = 3;
-  
-  // Add the new blur filter
-  target.filters.push(blurFilter);
-  
-  // Set the flag to remember blur is active
-  try {
-    await scene.setFlag("tactical-map", "blurActive", true);
-  } catch (error) {
-    console.error("Error setting blur active flag:", error);
-    // Continue anyway so at least the visual effect is applied
-  }
-  
-  // Animate the blur from 0 to the target amount
-  return new Promise((resolve) => {
-    animateBlur(blurFilter, 0, blurAmount, 500, () => {
-      debugLog(`Background blur FORCED with animated amount: ${blurAmount}`);
-      resolve(true);
-    });
-  });
 }
 
 export async function forceRemoveBlur(scene) {
@@ -332,8 +371,8 @@ export async function forceRemoveBlur(scene) {
             }
           }
           
-          // Update flag
-          scene.setFlag("tactical-map", "blurActive", false)
+          // Update flag in user flags
+          game.user.setFlag("tactical-map", `blurActive_${scene.id}`, false)
             .then(() => {
               debugLog("Background blur FORCED to disable with animation");
               resolve(true);
@@ -352,8 +391,8 @@ export async function forceRemoveBlur(scene) {
         target.filters = null;
       }
       
-      // Update flag
-      return scene.setFlag("tactical-map", "blurActive", false)
+      // Update flag in user flags
+      return game.user.setFlag("tactical-map", `blurActive_${scene.id}`, false)
         .then(() => {
           debugLog("Background blur flag cleared (no blur filter found)");
           return true;
@@ -366,7 +405,7 @@ export async function forceRemoveBlur(scene) {
   }
   
   // No filters at all, just update the flag
-  return scene.setFlag("tactical-map", "blurActive", false)
+  return game.user.setFlag("tactical-map", `blurActive_${scene.id}`, false)
     .then(() => {
       debugLog("Background blur flag cleared (no filters found)");
       return true;
@@ -376,3 +415,58 @@ export async function forceRemoveBlur(scene) {
       return false;
     });
 }
+
+// Add hook to handle blur effect initialization
+Hooks.on("canvasReady", async (canvas) => {
+  // Wait a short moment to ensure canvas is fully initialized
+  setTimeout(async () => {
+    const scene = canvas.scene;
+    if (!scene) return;
+    
+    // Check if tactical map is active
+    const isTacticalMapActive = game.user.isGM 
+      ? scene.getFlag("tactical-map", "isActive")
+      : game.user.getFlag("tactical-map", `isActive_${scene.id}`);
+    
+    const hasTacticalMapImage = scene.getFlag("tactical-map", "image");
+    
+    // If tactical map is active without an image, apply blur
+    if (isTacticalMapActive && !hasTacticalMapImage) {
+      console.log("Scene ready, applying blur effect");
+      try {
+        // Ensure canvas is fully ready
+        if (!canvas.ready) {
+          console.log("Waiting for canvas to be fully ready...");
+          await new Promise(resolve => {
+            const checkCanvas = () => {
+              if (canvas.ready) {
+                resolve();
+              } else {
+                setTimeout(checkCanvas, 100);
+              }
+            };
+            checkCanvas();
+          });
+        }
+        
+        // Double check we have a valid target
+        let target = null;
+        if (canvas.primary?.background) target = canvas.primary.background;
+        else if (canvas.scene?.background) target = canvas.scene.background;
+        else if (canvas.tiles?.background) target = canvas.tiles.background;
+        else if (canvas.environment) target = canvas.environment;
+        else if (canvas.stage) target = canvas.stage;
+        
+        if (!target) {
+          console.error("Could not find a valid background layer for blur application");
+          return;
+        }
+        
+        // Now apply the blur
+        await forceApplyBlur(scene);
+      } catch (error) {
+        console.error("Error applying blur effect on scene ready:", error);
+      }
+    }
+  }, 100); // Wait 100ms before attempting to apply blur
+});
