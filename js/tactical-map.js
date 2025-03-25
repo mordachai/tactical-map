@@ -113,6 +113,9 @@ function centerMap(scene) {
 // Add a flag to track if blur is being applied
 let isApplyingBlur = false;
 
+// Add a flag to track if we're in the middle of a toggle
+let isTogglingMap = false;
+
 export async function toggleTacticalMap() {
   const scene = game.scenes.active;
 
@@ -125,6 +128,8 @@ export async function toggleTacticalMap() {
   if (toggleButton) toggleButton.disabled = true;
   
   try {
+    isTogglingMap = true;  // Set the flag at the start of the toggle
+    
     // Get active state from appropriate source based on user role
     const isTacticalMapActive = game.user.isGM 
       ? scene.getFlag("tactical-map", "isActive")
@@ -311,8 +316,10 @@ export async function toggleTacticalMap() {
     console.error("Error toggling tactical map:", error);
     ui.notifications.error("Failed to toggle map. Check console for details.");
   } finally {
-    // Re-enable button
+    // Re-enable button and reset flags
     if (toggleButton) toggleButton.disabled = false;
+    isTogglingMap = false;
+    isApplyingBlur = false;
   }
 }
 
@@ -643,14 +650,17 @@ Hooks.on("canvasReady", (canvas) => {
   if (scene.getFlag("tactical-map", "isActive") !== undefined) {
     const isTacticalMapActive = scene.getFlag("tactical-map", "isActive");
     
-    // Store position for the current view
-    const positionFlag = isTacticalMapActive ? "tacticalMapPosition" : "mainMapPosition";
-    debugLog(`Scene ${scene.name} ready, storing current position as ${positionFlag}`);
-    
-    // Wait a moment for canvas to fully initialize
-    setTimeout(() => {
-      storeCanvasPosition(scene, positionFlag, true);
-    }, 500);
+    // Only store position if we're not in the middle of a toggle
+    if (!isApplyingBlur) {
+      // Store position for the current view
+      const positionFlag = isTacticalMapActive ? "tacticalMapPosition" : "mainMapPosition";
+      debugLog(`Scene ${scene.name} ready, storing current position as ${positionFlag}`);
+      
+      // Wait a moment for canvas to fully initialize
+      setTimeout(() => {
+        storeCanvasPosition(scene, positionFlag, true);
+      }, 500);
+    }
   }
 });
 

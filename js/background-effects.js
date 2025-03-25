@@ -309,12 +309,13 @@ export async function forceApplyBlur(scene) {
   }
 }
 
+// Function to force remove blur effect
 export async function forceRemoveBlur(scene) {
   if (!canvas || !canvas.ready || !scene) {
     console.log("Canvas or scene not ready for blur removal, initiating wait sequence");
     return new Promise((resolve) => {
       let attempts = 0;
-      const maxAttempts = 20; // Limit retry attempts (2 seconds total with 100ms intervals)
+      const maxAttempts = 20;
       
       const checkCanvas = () => {
         attempts++;
@@ -322,98 +323,76 @@ export async function forceRemoveBlur(scene) {
           console.log("Canvas now ready, proceeding with blur removal");
           forceRemoveBlur(scene).then(resolve);
         } else if (attempts < maxAttempts) {
-          // Try again in 100ms
           setTimeout(checkCanvas, 100);
         } else {
-          // Give up after too many attempts
           console.warn("Could not remove blur - canvas never ready after multiple attempts");
           resolve(false);
         }
       };
-      setTimeout(checkCanvas, 100);
+      
+      checkCanvas();
     });
   }
-  
-  // Find appropriate target for blur effect
-  let target = null;
-  if (canvas.primary?.background) target = canvas.primary.background;
-  else if (canvas.scene?.background) target = canvas.scene.background;
-  else if (canvas.tiles?.background) target = canvas.tiles.background;
-  else if (canvas.environment) target = canvas.environment;
-  else if (canvas.stage) target = canvas.stage;
-  
-  if (!target) {
-    console.error("Could not find a valid background layer for blur removal");
-    return false;
-  }
-  
-  // Use modern filter with appropriate fallback
-  const BlurFilterClass = PIXI.filters.BlurFilterDeprecated || PIXI.filters.BlurFilter;
-  
-  // Check if target has filters
-  if (target.filters) {
-    // Find blur filter
+
+  try {
+    // Find appropriate target for blur effect
+    let target = null;
+    if (canvas.primary?.background) target = canvas.primary.background;
+    else if (canvas.scene?.background) target = canvas.scene.background;
+    else if (canvas.tiles?.background) target = canvas.tiles.background;
+    else if (canvas.environment) target = canvas.environment;
+    else if (canvas.stage) target = canvas.stage;
+    
+    if (!target || !target.filters) {
+      console.log("No valid target or filters found for blur removal");
+      return false;
+    }
+
+    // Use modern filter with appropriate fallback
+    const BlurFilterClass = PIXI.filters.BlurFilterDeprecated || PIXI.filters.BlurFilter;
+    
+    // Find the blur filter
     const blurFilter = target.filters.find(f => f instanceof BlurFilterClass);
     
     if (blurFilter) {
       // Get current blur amount
       const currentBlur = blurFilter.blur;
       
-      // Animate blur to 0
-      return new Promise((resolve) => {
+      // Animate blur to 0 then remove the filter
+      await new Promise(resolve => {
         animateBlur(blurFilter, currentBlur, 0, 500, () => {
           // After animation completes, remove the filter
-          if (target.filters) {
-            target.filters = target.filters.filter(f => !(f instanceof BlurFilterClass));
-            
-            if (target.filters.length === 0) {
-              target.filters = null;
-            }
-          }
+          target.filters = target.filters.filter(f => !(f instanceof BlurFilterClass));
           
-          // Update flag in user flags
-          game.user.setFlag("tactical-map", `blurActive_${scene.id}`, false)
-            .then(() => {
-              debugLog("Background blur FORCED to disable with animation");
-              resolve(true);
-            })
-            .catch(error => {
-              console.error("Error updating blur flag:", error);
-              resolve(false);
-            });
+          if (target.filters.length === 0) {
+            target.filters = null;
+          }
+          resolve();
         });
       });
     } else {
-      // No blur filter found, just clean up
+      // If no blur filter found, just remove all filters of that type
       target.filters = target.filters.filter(f => !(f instanceof BlurFilterClass));
       
       if (target.filters.length === 0) {
         target.filters = null;
       }
-      
-      // Update flag in user flags
-      return game.user.setFlag("tactical-map", `blurActive_${scene.id}`, false)
-        .then(() => {
-          debugLog("Background blur flag cleared (no blur filter found)");
-          return true;
-        })
-        .catch(error => {
-          console.error("Error updating blur flag:", error);
-          return false;
-        });
     }
+    
+    // Update flag in client-side storage for both GM and players
+    try {
+      await game.user.setFlag("tactical-map", `blurActive_${scene.id}`, false);
+      console.log("Successfully set blur inactive flag");
+    } catch (error) {
+      console.error("Error setting blur inactive flag:", error);
+    }
+    
+    debugLog("Background blur FORCED removal");
+    return true;
+  } catch (error) {
+    console.error("Error removing blur effect:", error);
+    return false;
   }
-  
-  // No filters at all, just update the flag
-  return game.user.setFlag("tactical-map", `blurActive_${scene.id}`, false)
-    .then(() => {
-      debugLog("Background blur flag cleared (no filters found)");
-      return true;
-    })
-    .catch(error => {
-      console.error("Error updating blur flag:", error);
-      return false;
-    });
 }
 
 // Add hook to handle blur effect initialization
@@ -463,7 +442,7 @@ Hooks.on("canvasReady", async (canvas) => {
         }
         
         // Now apply the blur
-        await forceApplyBlur(scene);
+        await toggleBackgroundBlur(scene);
       } catch (error) {
         console.error("Error applying blur effect on scene ready:", error);
       }
