@@ -26,7 +26,10 @@ In Foundry VTT, go to the Add-on Modules tab and click Install Module. Then:
 OR
 - Paste the following manifest URL into the bottom Manifest URL field: ```https://raw.githubusercontent.com/mordachai/tactical-map/main/module.json```
 
-After the installation enable the module in your Game Settings, under Manage Modules
+After the installation enable the module in your Game Settings, under Manage Modules. 
+
+## Scene Configuration
+![image](https://raw.githubusercontent.com/mordachai/tactical-map/main/TacticalMapUpdate_panel.png)
 
 ### Alternative token images
 
