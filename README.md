@@ -4,7 +4,8 @@
 
 It's a quality of life module, especially if you are running a _Theater of the Mind_ game, but want to solve combats more tactically.
 
-Check it out in action:
+Check it out in action, click the image to open the video:
+
 [![YouTube video](https://raw.githubusercontent.com/mordachai/tactical-map/dev/TacticalMapUpdate_snapshot.png 'Tactical Map Update')](https://youtu.be/uN3BWyXhWwU?si=1Ow4EEkvnG0Vhi63)
 
 ## Features
@@ -25,7 +26,10 @@ In Foundry VTT, go to the Add-on Modules tab and click Install Module. Then:
 OR
 - Paste the following manifest URL into the bottom Manifest URL field: ```https://raw.githubusercontent.com/mordachai/tactical-map/main/module.json```
 
-After the installation enable the module in your Game Settings, under Manage Modules
+After the installation enable the module in your Game Settings, under Manage Modules. 
+
+## Scene Configuration
+![image](https://raw.githubusercontent.com/mordachai/tactical-map/main/TacticalMapUpdate_panel.png)
 
 ### Alternative token images
 
