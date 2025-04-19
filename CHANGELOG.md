@@ -1,4 +1,5 @@
-# Changelog
+## [2.4.0] - 2025-04-19
+- **Hexcrawl Map**: added hexcrawl setting: allows a different icon on the main map if it's marked as hexcrawl.
 
 ## [2.3.3] - 2025-03-24
 - **Fixed error on remove blur**: fixed error message on remove blur function.
