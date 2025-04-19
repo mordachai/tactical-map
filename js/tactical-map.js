@@ -4,6 +4,9 @@ import { debugLog } from './logger-tcmap.js';
 import { isV13OrLater } from './compatibility.js';
 import { toggleBackgroundBlur, forceApplyBlur, forceRemoveBlur } from './background-effects.js';
 
+function getScenePositionKey(scene, baseFlag) {
+  return baseFlag + '_' + scene.id;
+}
 
 async function storeCanvasPosition(scene, baseFlag) {
   try {
@@ -27,10 +30,16 @@ async function storeCanvasPosition(scene, baseFlag) {
     // If user is GM, store in scene flags, otherwise store in user settings
     if (game.user.isGM) {
       await scene.setFlag("tactical-map", baseFlag, positionData);
+      // Verify the flag was stored
+      const storedData = scene.getFlag("tactical-map", baseFlag);
+      debugLog(`Verified stored position for ${baseFlag}:`, storedData ? "success" : "failed");
     } else {
       // Store in user settings with scene-specific key
       const userKey = `${baseFlag}_${scene.id}`;
       await game.user.setFlag("tactical-map", userKey, positionData);
+      // Verify the flag was stored
+      const storedData = game.user.getFlag("tactical-map", userKey);
+      debugLog(`Verified stored user position for ${userKey}:`, storedData ? "success" : "failed");
     }
     return true;
   } catch (error) {
@@ -135,15 +144,22 @@ export async function toggleTacticalMap() {
       ? scene.getFlag("tactical-map", "isActive")
       : game.user.getFlag("tactical-map", `isActive_${scene.id}`);
 
+    const isMainMapHexcrawl = scene.getFlag("tactical-map", "isMainMapHexcrawl") || false;
+    
     const currentMap = isTacticalMapActive ? "Tactical Map" : "Main Map";
     const currentFlag = isTacticalMapActive ? "tacticalMapPosition" : "mainMapPosition";
     const targetFlag = isTacticalMapActive ? "mainMapPosition" : "tacticalMapPosition";
     
     debugLog(`Toggling from ${currentMap} to ${isTacticalMapActive ? "Main Map" : "Tactical Map"}`);
+    debugLog(`Is Main Map Hexcrawl: ${isMainMapHexcrawl}`);
     
     // IMPORTANT: First store current view position
     await storeCanvasPosition(scene, currentFlag);
     debugLog(`Stored current ${currentMap} position`);
+    
+    // Check for saved target position
+    const targetPosition = scene.getFlag("tactical-map", targetFlag);
+    debugLog(`Pre-toggle: Target position for ${targetFlag}:`, targetPosition);
     
     // Check for tactical map image
     const tacticalMapImage = scene.getFlag("tactical-map", "image");
@@ -167,6 +183,15 @@ export async function toggleTacticalMap() {
           
           // Restore tokens
           await restoreTokenPositions(scene, "originalTokenPositions");
+          
+          // If the main map is hexcrawl, apply the hexcrawl token art
+          if (isMainMapHexcrawl) {
+            // IMPORTANT: Use "deactivate" here for hexcrawl main map
+            await switchTokenArt(scene, "deactivate");
+          } else {
+            // For non-hexcrawl main map, also use "deactivate" to restore original tokens
+            await switchTokenArt(scene, "deactivate");
+          }
         } else {
           // For players, just update their local state
           await game.user.setFlag("tactical-map", `isActive_${scene.id}`, false);
@@ -197,14 +222,19 @@ export async function toggleTacticalMap() {
           await storeTokenPositions(scene, "originalTokenPositions");
           
           // Update grid type
-          const tacticalGridType = scene.getFlag("tactical-map", "gridType") || 1;
-          await scene.update({ "grid.type": tacticalGridType });
+          const tacticalGridType = scene.getFlag("tactical-map", "gridType");
+          const gridTypeToApply = tacticalGridType !== undefined && tacticalGridType !== null ? 
+                                 tacticalGridType : 1;
+          await scene.update({ "grid.type": gridTypeToApply });
           
           // Set active flag
           await scene.setFlag("tactical-map", "isActive", true);
           
           // Restore tokens 
           await restoreTokenPositions(scene, "tacticalTokenPositions");
+          
+          // Apply token art switch for tactical map (IMPORTANT: Use "activate" here)
+          await switchTokenArt(scene, "activate");
         } else {
           // For players, just update their local state
           await game.user.setFlag("tactical-map", `isActive_${scene.id}`, true);
@@ -280,7 +310,15 @@ export async function toggleTacticalMap() {
         // Restore tokens and art (GM only)
         if (game.user.isGM) {
           await restoreTokenPositions(scene, "originalTokenPositions");
-          await switchTokenArt(scene, "deactivate");
+          
+          // Handle token art switching with consideration for hexcrawl main maps
+          if (isMainMapHexcrawl) {
+            // Apply hexcrawl token art to main map
+            await switchTokenArt(scene, "deactivate");
+          } else {
+            // Standard token art restoration
+            await switchTokenArt(scene, "deactivate");
+          }
         } else {
           // For players, just update their local state
           await game.user.setFlag("tactical-map", `isActive_${scene.id}`, false);
@@ -301,6 +339,7 @@ export async function toggleTacticalMap() {
         // Restore tokens and art (GM only)
         if (game.user.isGM) {
           await restoreTokenPositions(scene, "tacticalTokenPositions");
+          // IMPORTANT: Always use "activate" when switching to tactical map
           await switchTokenArt(scene, "activate");
         } else {
           // For players, just update their local state
@@ -325,6 +364,10 @@ export async function toggleTacticalMap() {
 
 async function activateTacticalMap(scene, targetPositionFlag) {
   try {
+    // Check for saved position
+    const originalPosition = scene.getFlag("tactical-map", targetPositionFlag);
+    debugLog(`Pre-activation: Saved position for ${targetPositionFlag}:`, originalPosition);
+    
     const tacticalMapImage = scene.getFlag("tactical-map", "image");
     if (!tacticalMapImage) {
       ui.notifications.warn("No Tactical Map image set for this scene.");
@@ -350,8 +393,8 @@ async function activateTacticalMap(scene, targetPositionFlag) {
     // Load image dimensions
     const imgDimensions = await loadImagePromise(tacticalMapImage);
     
-    // Get tactical map grid settings
-    const gridType = scene.getFlag("tactical-map", "gridType") || 1;
+    // Get tactical map grid settings - FIX: Ensure gridType properly handles 0 (gridless)
+    const gridType = scene.getFlag("tactical-map", "gridType");
     const gridSize = scene.getFlag("tactical-map", "gridSize") || 100;
     
     // Get grid styling settings
@@ -365,9 +408,13 @@ async function activateTacticalMap(scene, targetPositionFlag) {
       "background.src": tacticalMapImage,
       width: imgDimensions.width,
       height: imgDimensions.height,
-      "grid.type": gridType,
       "grid.size": gridSize
     };
+    
+    // Only set grid type if it exists and is a number (including 0 for gridless)
+    if (gridType !== undefined && gridType !== null) {
+      updates["grid.type"] = gridType;
+    }
     
     // Add optional grid styling
     if (gridColor) updates["grid.color"] = gridColor;
@@ -391,7 +438,9 @@ async function activateTacticalMap(scene, targetPositionFlag) {
     }
     
     // Set up a hook to restore position after canvas is ready
+    debugLog(`Set hook to restore position ${targetPositionFlag} after canvas ready`);
     Hooks.once("canvasReady", () => {
+      debugLog(`Canvas ready hook fired, restoring position ${targetPositionFlag}`);
       restoreCanvasPosition(scene, targetPositionFlag);
     });
     
@@ -405,6 +454,10 @@ async function activateTacticalMap(scene, targetPositionFlag) {
 
 async function restoreOriginalMap(scene, targetPositionFlag) {
   try {
+    // Check for saved position
+    const originalPosition = scene.getFlag("tactical-map", targetPositionFlag);
+    debugLog(`Pre-restoration: Saved position for ${targetPositionFlag}:`, originalPosition);
+    
     const originalSettings = scene.getFlag("tactical-map", "originalSettings");
     if (!originalSettings) {
       ui.notifications.warn("Original scene settings not found.");
@@ -429,7 +482,9 @@ async function restoreOriginalMap(scene, targetPositionFlag) {
     await scene.unsetFlag("tactical-map", "isActive");
     
     // Set up a hook to restore position after canvas is ready
+    debugLog(`Set hook to restore position ${targetPositionFlag} after canvas ready`);
     Hooks.once("canvasReady", () => {
+      debugLog(`Canvas ready hook fired, restoring position ${targetPositionFlag}`);
       restoreCanvasPosition(scene, targetPositionFlag);
     });
     
@@ -455,7 +510,16 @@ function setupCanvasPositionMonitoring() {
         storeCanvasPosition(scene, positionFlag);
         debugLog(`Canvas ready: stored position for ${positionFlag}`);
       }
-    }, 500);
+      
+      // Check if we need to apply hexcrawl tokens on the main map
+      const isMainMapHexcrawl = scene.getFlag("tactical-map", "isMainMapHexcrawl") || false;
+      if (isMainMapHexcrawl && !isTacticalMapActive && game.user.isGM) {
+        // Only import and use if needed
+        import('./token-art-switcher.js').then(module => {
+          module.switchTokenArt(scene, "deactivate");
+        });
+      }
+    }, 1000); // Increased from 500 to 1000ms for better reliability
   });
 }
 
@@ -606,6 +670,29 @@ Hooks.on("createToken", async (scene, tokenData) => {
   } else {
     await positionTokenOnInactiveMap(scene, tokenData, "tacticalTokenPositions");
   }
+  
+  // Apply appropriate token art for new token if settings require it
+  const isMainMapHexcrawl = scene.getFlag("tactical-map", "isMainMapHexcrawl") || false;
+  let useAlternativeTokenArt = false;
+  try {
+    useAlternativeTokenArt = game.settings.get("tactical-map", "useAlternativeTokenArt");
+  } catch (error) {
+    debugLog("useAlternativeTokenArt setting not registered yet");
+  }
+  
+  if (useAlternativeTokenArt) {
+    if (isTacticalMapActive) {
+      // If tactical map is active, apply the appropriate art for tactical map type
+      import('./token-art-switcher.js').then(module => {
+        module.switchTokenArt(scene, "activate");
+      });
+    } else if (isMainMapHexcrawl) {
+      // If main map is hexcrawl and we're on main map, apply hexcrawl art
+      import('./token-art-switcher.js').then(module => {
+        module.switchTokenArt(scene, "deactivate");
+      });
+    }
+  }
 });
 
 async function positionTokenOnInactiveMap(scene, tokenData, flag) {
@@ -651,16 +738,49 @@ Hooks.on("canvasReady", (canvas) => {
     const isTacticalMapActive = scene.getFlag("tactical-map", "isActive");
     
     // Only store position if we're not in the middle of a toggle
-    if (!isApplyingBlur) {
+    if (!isApplyingBlur && !isTogglingMap) {
       // Store position for the current view
       const positionFlag = isTacticalMapActive ? "tacticalMapPosition" : "mainMapPosition";
       debugLog(`Scene ${scene.name} ready, storing current position as ${positionFlag}`);
       
       // Wait a moment for canvas to fully initialize
       setTimeout(() => {
-        storeCanvasPosition(scene, positionFlag, true);
-      }, 500);
+        storeCanvasPosition(scene, positionFlag);
+      }, 1000); // Increased from 500 to 1000ms
     }
+  }
+});
+
+// Add a hook to handle scene activation for hexcrawl main maps
+Hooks.on("canvasInit", async (canvas) => {
+  const scene = canvas.scene;
+  if (!scene) return;
+  
+  // Check if this is a hexcrawl main map and tactical map is not active
+  const isMainMapHexcrawl = scene.getFlag("tactical-map", "isMainMapHexcrawl") || false;
+  const isTacticalMapActive = scene.getFlag("tactical-map", "isActive") || false;
+  
+  if (isMainMapHexcrawl && !isTacticalMapActive && game.user.isGM) {
+    debugLog("Hexcrawl main map activated, applying hexcrawl token art");
+    
+    // Wait for canvas to be ready
+    if (!canvas.ready) {
+      await new Promise(resolve => {
+        const checkCanvasReady = () => {
+          if (canvas.ready) {
+            resolve();
+          } else {
+            setTimeout(checkCanvasReady, 100);
+          }
+        };
+        checkCanvasReady();
+      });
+    }
+    
+    // Apply hexcrawl token art - IMPORTANT: Use "deactivate" for applying hexcrawl art on main map
+    import('./token-art-switcher.js').then(module => {
+      module.switchTokenArt(scene, "deactivate");
+    });
   }
 });
 
@@ -681,8 +801,8 @@ Hooks.once("ready", () => {
       const flagKeyMain = getScenePositionKey(scene, "mainMapPosition");
       const flagKeyTactical = getScenePositionKey(scene, "tacticalMapPosition");
       
-      const mainPos = game.settings.get("tactical-map", flagKeyMain);
-      const tacticalPos = game.settings.get("tactical-map", flagKeyTactical);
+      const mainPos = scene.getFlag("tactical-map", "mainMapPosition");
+      const tacticalPos = scene.getFlag("tactical-map", "tacticalMapPosition");
       
       console.log("Current Canvas Position:", {
         x: canvas.stage.pivot.x,
@@ -693,6 +813,16 @@ Hooks.once("ready", () => {
       console.log("Stored Positions:", {
         main: mainPos,
         tactical: tacticalPos
+      });
+      
+      // Add hexcrawl debug info
+      const isMainMapHexcrawl = scene.getFlag("tactical-map", "isMainMapHexcrawl") || false;
+      const mapType = scene.getFlag("tactical-map", "mapType") || "unknown";
+      
+      console.log("Hexcrawl Debug Info:", {
+        isMainMapHexcrawl,
+        tacticalMapType: mapType,
+        isActive: scene.getFlag("tactical-map", "isActive") || false
       });
     };
     

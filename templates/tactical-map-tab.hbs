@@ -16,9 +16,18 @@
       <select name="tacticalMapType">
         <option value="top-down" {{#if isTopDown}}selected{{/if}}>Top-down</option>
         <option value="isometric" {{#if isIsometric}}selected{{/if}}>Isometric View</option>
+        <option value="hexcrawl" {{#if isHexcrawl}}selected{{/if}}>Hexcrawl View</option>
       </select>
     </div>
-    <p class="notes">Token type to use: "token_tdv" to Top-down and "token_isv" to Isometric.</p>
+    <p class="notes">Token type to use: "token_tdv" for Top-down, "token_isv" for Isometric, and "token_hxv" for Hexcrawl.</p>
+  </div>
+
+  <div class="form-group">
+    <label>Is Main Map Hexcrawl?</label>
+    <div class="form-fields">
+      <input type="checkbox" name="isMainMapHexcrawl" {{#if isMainMapHexcrawl}}checked{{/if}}>
+    </div>
+    <p class="notes">Check this if the main map is a hexcrawl and should use _hxv token suffix by default.</p>
   </div>
 
   <hr>
@@ -34,101 +43,89 @@
   <hr>
 
   <div class="tm-title3">Tactical Map Grid Settings:</div>
-  {{#unless hasTacticalMap}}
-  <p class="notes">Set the grid type and blur amount. Add a tactical map image to access other grid settings.</p>
-  {{/unless}}
+  <p class="notes">Set the grid type{{#unless hasTacticalMap}} and blur amount. Add a tactical map image to access other grid settings.{{/unless}}</p>
 
-  <div class="grid-settings-container">
-    <div class="form-group">
-      <label>Grid Type</label>
-      <div class="form-fields">
-        <select name="tacticalMapGridType">
-          {{#each gridTypeOptions}}
-            <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.text}}</option>
-          {{/each}}
-        </select>
-      </div>
-    </div>
-    
-
-    <div class="form-group"
-     {{#if hasTacticalMap}} style="display: none;"{{/if}}>
-      <label>Background Blur</label>
-      <div class="form-fields">
-        <input type="range" name="blurAmount" value="{{blurAmount}}" min="0" max="30" step="1">
-        <span class="range-value">{{blurAmount}}</span>
-      </div>
-      <p class="notes">Blur when no tactical map image is set.</p>
+  <div class="form-group">
+    <label>Grid Type</label>
+    <div class="form-fields">
+      <select name="tacticalMapGridType">
+        {{#each gridTypeOptions}}
+          <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.text}}</option>
+        {{/each}}
+      </select>
     </div>
   </div>
 
+  <div class="form-group" {{#if hasTacticalMap}}style="display: none;"{{/if}}>
+    <label>Background Blur</label>
+    <div class="form-fields">
+      <input type="range" name="blurAmount" value="{{blurAmount}}" min="0" max="30" step="1">
+      <span class="range-value">{{blurAmount}}</span>
+    </div>
+    <p class="notes">Blur when no tactical map image is set.</p>
+  </div>
 
   <hr>
 
-  {{#if hasTacticalMap}}
-    <div class="grid-settings-container">
-      <div>
-        <div class="form-group">
-          <label>Grid Size <span class="units"></span></label>
-          <div class="form-fields">
-            <input type="number" name="tacticalMapGridSize" value="{{tacticalGridSize}}" min="20" step="1" placeholder="Pixels">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Grid Scale</label>
-          <div class="form-fields">
-            <label class="grid-label">Distance</label>
-            <input type="number" name="tacticalMapGridScale.distance" value="{{tacticalGridScale.distance}}" step="any" placeholder="1">
-            <label class="grid-label">Units</label>
-            <input type="text" name="tacticalMapGridScale.units" placeholder="None" value="{{tacticalGridScale.units}}">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Grid Style</label>
-          <div class="form-fields">
-            <select name="tacticalMapGridStyle">
-              {{#each gridStyleOptions}}
-                <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.text}}</option>
-              {{/each}}
-            </select>
-          </div>
+  <div class="grid-settings-container" {{#unless hasTacticalMap}}style="display: none;"{{/unless}}>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; grid-gap: 10px;">
+      <div class="form-group">
+        <label>Grid Size <span class="units"></span></label>
+        <div class="form-fields">
+          <input type="number" name="tacticalMapGridSize" value="{{tacticalGridSize}}" min="20" step="1" placeholder="Pixels">
         </div>
       </div>
-      <div>
-        <div class="form-group">
-          <label>Grid Thickness</label>
-          <div class="form-fields">
-            <input type="number" name="tacticalMapGridThickness" value="{{tacticalGridThickness}}" step="any" placeholder="1">
-          </div>
-        </div>
 
-        <div class="form-group">
-          <label>Grid Color</label>
-          <div class="form-fields">
-            <input type="text" name="tacticalMapGridColor" value="{{tacticalGridColor}}" placeholder="#000000">
-            <input type="color" value="{{tacticalGridColor}}" data-edit="tacticalMapGridColor">
-          </div>
+      <div class="form-group">
+        <label>Grid Thickness</label>
+        <div class="form-fields">
+          <input type="number" name="tacticalMapGridThickness" value="{{tacticalGridThickness}}" step="any" placeholder="1">
         </div>
+      </div>
 
-        <div class="form-group">
-          <label>Grid Opacity</label>
-          <div class="form-fields">
-            <input type="range" name="tacticalMapGridAlpha" value="{{tacticalGridAlpha}}" min="0" max="1" step="0.05">
-            <span class="range-value">{{tacticalGridAlpha}}</span>
-          </div>
+      <div class="form-group">
+        <label>Grid Scale</label>
+        <div class="form-fields">
+          <label class="grid-label">Distance</label>
+          <input type="number" name="tacticalMapGridScale.distance" value="{{tacticalGridScale.distance}}" step="any" placeholder="1">
+          <label class="grid-label">Units</label>
+          <input type="text" name="tacticalMapGridScale.units" placeholder="None" value="{{tacticalGridScale.units}}">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Grid Color</label>
+        <div class="form-fields">
+          <input type="text" name="tacticalMapGridColor" value="{{tacticalGridColor}}" placeholder="#000000">
+          <input type="color" value="{{tacticalGridColor}}" data-edit="tacticalMapGridColor">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Grid Style</label>
+        <div class="form-fields">
+          <select name="tacticalMapGridStyle">
+            {{#each gridStyleOptions}}
+              <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.text}}</option>
+            {{/each}}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Grid Opacity</label>
+        <div class="form-fields">
+          <input type="range" name="tacticalMapGridAlpha" value="{{tacticalGridAlpha}}" min="0" max="1" step="0.05">
+          <span class="range-value">{{tacticalGridAlpha}}</span>
         </div>
       </div>
     </div>
+  </div>
 
-    <hr>
-  
-    <div class="form-group">
-      <label>Preview:</label>
-      <div class="preview-image">
-        <img src="{{tacticalMapImage}}" style="max-width: 250px; max-height: 200px; object-fit: contain;">
-      </div>
+  <div class="form-group" {{#unless hasTacticalMap}}style="display: none;"{{/unless}}>
+    <label>Preview:</label>
+    <div class="preview-image">
+      <img src="{{tacticalMapImage}}" style="max-width: 250px; max-height: 200px; object-fit: contain;">
     </div>
-  {{/if}}
+  </div>
 </div>

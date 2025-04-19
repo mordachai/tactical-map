@@ -28,16 +28,39 @@ export async function switchTokenArt(scene, action) {
     return;
   }
 
+  // Get map type and check if main map is hexcrawl
   const mapType = scene.getFlag("tactical-map", "mapType");
+  const isMainMapHexcrawl = scene.getFlag("tactical-map", "isMainMapHexcrawl") || false;
+  const isTacticalMapActive = scene.getFlag("tactical-map", "isActive") || false;
+  
   debugLog("Tactical Map Type:", mapType);
+  debugLog("Is Main Map Hexcrawl:", isMainMapHexcrawl);
+  debugLog("Is Tactical Map Active:", isTacticalMapActive);
 
-  if (!mapType) {
-    debugLog("No Tactical Map Type set.");
+  if (!mapType && !isMainMapHexcrawl) {
+    debugLog("No Tactical Map Type set and main map is not hexcrawl.");
     return;
   }
 
   // Get appropriate suffix based on map type
-  const suffix = mapType === "top-down" ? "_tdv" : "_isv";
+  let suffix;
+  
+  // FIX: Check both the action parameter AND the current state
+  if (action === "activate" || isTacticalMapActive) {
+    // When activating tactical map or when already on tactical map, use the tactical map type suffix
+    suffix = mapType === "top-down" ? "_tdv" : (mapType === "isometric" ? "_isv" : "_hxv");
+    debugLog(`Using suffix '${suffix}' for tactical map with type '${mapType}'`);
+  } else {
+    // When deactivating, if main map is hexcrawl, use hexcrawl suffix
+    if (isMainMapHexcrawl) {
+      suffix = "_hxv";
+      debugLog("Using _hxv suffix for hexcrawl main map");
+    } else {
+      // Otherwise just restore original image with no suffix
+      suffix = "";
+      debugLog("Using no suffix for regular main map");
+    }
+  }
   
   // Get all tokens in the scene
   const tokens = scene.tokens.contents;
@@ -63,16 +86,16 @@ export async function switchTokenArt(scene, action) {
           continue;
         }
         
-        if (action === "activate") {
-          // Store original image if not already stored
-          if (!token.getFlag("tactical-map", "originalImage")) {
-            await token.setFlag("tactical-map", "originalImage", texture);
-            debugLog(`[${action}] Registered Original Image for '${token.name}': ${texture}`);
-          }
-          
-          const originalImg = token.getFlag("tactical-map", "originalImage");
-          const pathInfo = parseImagePath(originalImg);
-          
+        // Store original image if not already stored
+        if (!token.getFlag("tactical-map", "originalImage")) {
+          await token.setFlag("tactical-map", "originalImage", texture);
+          debugLog(`[${action}] Registered Original Image for '${token.name}': ${texture}`);
+        }
+        
+        const originalImg = token.getFlag("tactical-map", "originalImage");
+        const pathInfo = parseImagePath(originalImg);
+        
+        if (suffix) {
           // Create the new image path
           const newImgPath = createAlternativeImagePath(pathInfo, suffix);
           
@@ -89,14 +112,10 @@ export async function switchTokenArt(scene, action) {
           } else {
             debugLog(`[${action}] Alternative image not found for '${token.name}': ${newImgPath}`);
           }
-        } else if (action === "deactivate") {
+        } else {
           // Restore the original image
-          const originalImage = token.getFlag("tactical-map", "originalImage");
-          
-          if (originalImage) {
-            debugLog(`[${action}] Restoring original image for '${token.name}': ${originalImage}`);
-            tokenUpdates.push({ _id: token.id, "texture.src": originalImage });
-          }
+          debugLog(`[${action}] Restoring original image for '${token.name}': ${originalImg}`);
+          tokenUpdates.push({ _id: token.id, "texture.src": originalImg });
         }
       } catch (error) {
         console.error(`Error processing token '${token.name}':`, error);
@@ -147,11 +166,11 @@ function createAlternativeImagePath(pathInfo, suffix) {
   
   // Check if filename already has a suffix we need to replace
   let baseFilename = filename;
-  if (baseFilename.endsWith('_tdv') || baseFilename.endsWith('_isv')) {
+  if (baseFilename.endsWith('_tdv') || baseFilename.endsWith('_isv') || baseFilename.endsWith('_hxv')) {
     baseFilename = baseFilename.substring(0, baseFilename.length - 4);
   }
   
-  return `${directory}${baseFilename}${suffix}${extension}${query}`;
+  return suffix ? `${directory}${baseFilename}${suffix}${extension}${query}` : `${directory}${baseFilename}${extension}${query}`;
 }
 
 // Improved file existence check
