@@ -5,41 +5,54 @@ import { TacticalMapBulkConfig } from './bulk-config-app.js';
 
 // Register Scenes Directory button hook
 Hooks.on("renderSceneDirectory", (app, html, data) => {
-  // Convert HTMLElement to jQuery if needed
-  const $html = html instanceof HTMLElement ? $(html) : html;
+  // Ensure we're working with an HTML element
+  const element = html instanceof HTMLElement ? html : html[0];
 
   // Check if button already exists
-  if ($html.find(".tactical-map-bulk-config-button").length) return;
+  if (element.querySelector(".tactical-map-bulk-config-button")) return;
+
+  // Create button row
+  const buttonRow = document.createElement("div");
+  buttonRow.className = "tactical-map-button-row";
 
   // Create button
-  const button = $(`
-    <button class="tactical-map-bulk-config-button"
-            title="Configure Tactical Maps for All Scenes">
-      <i class="fa-solid fa-map-marked-alt"></i>
-      Tactical Map Config
-    </button>
-  `);
-
-  // Insert below the header buttons, above the search bar
-  const headerActions = $html.find(".directory-header .header-actions");
-
-  if (headerActions.length) {
-    // Create a new row for our button below header-actions
-    const buttonRow = $('<div class="tactical-map-button-row"></div>');
-    buttonRow.append(button);
-    headerActions.after(buttonRow);
-  } else {
-    // Fallback: insert at top of directory list
-    $html.find(".directory-list").before('<div class="tactical-map-button-row"></div>');
-    $html.find(".tactical-map-button-row").append(button);
-  }
+  const button = document.createElement("button");
+  button.className = "tactical-map-bulk-config-button";
+  button.title = "Configure Tactical Maps for All Scenes";
+  button.innerHTML = `
+    <i class="fa-solid fa-map-marked-alt"></i>
+    Tactical Map Config
+  `;
 
   // Click handler
-  button.on("click", () => {
+  button.addEventListener("click", () => {
     new TacticalMapBulkConfig().render(true);
   });
 
-  debugLog("Tactical Map bulk config button added to Scenes Directory");
+  buttonRow.appendChild(button);
+
+  // Try multiple insertion strategies for v13 compatibility
+  const headerActions = element.querySelector(".header-actions");
+  const directoryHeader = element.querySelector(".directory-header");
+  const directoryList = element.querySelector(".directory-list");
+
+  if (headerActions) {
+    // Insert after header-actions
+    headerActions.insertAdjacentElement("afterend", buttonRow);
+    debugLog("Tactical Map bulk config button added after header-actions");
+  } else if (directoryHeader) {
+    // Insert after directory-header
+    directoryHeader.insertAdjacentElement("afterend", buttonRow);
+    debugLog("Tactical Map bulk config button added after directory-header");
+  } else if (directoryList) {
+    // Fallback: insert before directory-list
+    directoryList.insertAdjacentElement("beforebegin", buttonRow);
+    debugLog("Tactical Map bulk config button added before directory-list");
+  } else {
+    // Last resort: append to the root element
+    element.appendChild(buttonRow);
+    debugLog("Tactical Map bulk config button added to root (fallback)");
+  }
 });
 
 // Register scene controls button hook

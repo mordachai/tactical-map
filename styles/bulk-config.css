@@ -14,10 +14,13 @@
 
 /* Folder Sections */
 .folder-section {
-  margin-bottom: 1rem;
-  border: 1px solid var(--color-border-dark);
-  border-radius: 4px;
-  background: var(--color-bg-option);
+  margin-bottom: 0;
+  border: 1px solid var(--color-dark-5);
+  border-bottom: none;
+}
+
+.folder-section:last-child {
+  border-bottom: 1px solid var(--color-dark-5);
 }
 
 .folder-header {
@@ -25,7 +28,8 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  background: var(--color-bg-btn);
+  background: var(--color-cool-5-90);
+  color: var(--color-light-4);
   cursor: pointer;
   user-select: none;
   border-radius: 4px 4px 0 0;
@@ -33,7 +37,7 @@
 }
 
 .folder-header:hover {
-  background: var(--color-border-highlight);
+  background: var(--color-cool-3);
 }
 
 .folder-header .folder-name {
@@ -43,18 +47,18 @@
 }
 
 .folder-header .scene-count {
-  color: var(--color-text-light-secondary);
+  color: var(--color-light-4);
   font-size: 0.9em;
 }
 
 .folder-header .toggle-icon {
-  color: var(--color-text-light-secondary);
+  color: var(--color-light-4);
   font-size: 0.75rem;
   transition: transform 0.2s;
 }
 
 .folder-header.expanded .toggle-icon {
-  transform: rotate(90deg);
+  transform: rotate(0deg);
 }
 
 /* Scenes Container */
@@ -76,10 +80,12 @@
 
 /* Scene Row */
 .scene-row {
-  margin-bottom: 0.5rem;
-  border: 1px solid var(--color-border-dark);
-  border-radius: 4px;
-  background: var(--color-bg-option);
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--color-dark-5);
+}
+
+.scene-row:last-child {
+  border-bottom: none;
 }
 
 .scene-compact {
@@ -93,18 +99,18 @@
 }
 
 .scene-compact:hover {
-  background: var(--color-border-dark);
+  background: var(--color-cool-5-50);
 }
 
 .scene-compact .expand-icon {
-  color: var(--color-text-light-secondary);
+  color: var(--color-light-4);
   font-size: 0.75rem;
   transition: transform 0.2s;
   min-width: 12px;
 }
 
 .scene-row.expanded .expand-icon {
-  transform: rotate(90deg);
+  transform: rotate(0deg);
 }
 
 .scene-thumbnail {
@@ -112,14 +118,14 @@
   height: 80px;
   object-fit: cover;
   border-radius: 4px;
-  border: 1px solid var(--color-border-dark);
+  border: 1px solid var(--color-dark-5);
   flex-shrink: 0;
 }
 
 .scene-name {
   flex: 1;
   font-weight: 500;
-  font-size: 1em;
+  font-size: 1.4em;
 }
 
 .scene-meta {
@@ -133,9 +139,10 @@
   padding: 0.25rem 0.5rem;
   border-radius: 3px;
   font-size: 0.75rem;
-  background: var(--color-border-dark);
-  color: var(--color-text-light-secondary);
-  border: none;
+  background: var(--color-cool-5);
+  color: var(--color-light-2);
+  border: 1px solid var(--color-dark-5);
+  font-weight: 500;
 }
 
 .save-indicator {
@@ -157,8 +164,7 @@
 /* Scene Settings Expanded */
 .scene-settings {
   padding: 1rem;
-  border-top: 1px solid var(--color-border-dark);
-  background: var(--color-bg);
+  border-top: 1px solid var(--color-dark-5);
   animation: slideDown 0.2s ease-out;
 }
 
@@ -191,10 +197,8 @@
 .form-row input[type="number"],
 .form-row select {
   padding: 0.25rem 0.5rem;
-  border: 1px solid #7a7971;
+  border: 1px solid var(--color-dark-5);
   border-radius: 3px;
-  background: rgba(0, 0, 0, 0.3);
-  color: #fff;
   font-size: 0.9em;
 }
 
@@ -234,8 +238,8 @@
   padding: 0.25rem 0.5rem;
   border: none;
   border-radius: 4px;
-  background: var(--color-border-dark);
-  color: var(--color-text-light-primary);
+  background: var(--color-cool-5);
+  color: var(--color-light-2);
   cursor: pointer;
   transition: all 0.2s;
   font-size: 0.9em;
@@ -243,8 +247,8 @@
 }
 
 .file-picker-button:hover {
-  background: var(--color-border-highlight);
-  color: var(--color-text-light-highlight);
+  background: var(--color-cool-3);
+  color: var(--color-light-1);
 }
 
 /* Image Actions Column */
@@ -264,7 +268,7 @@
   border: none;
   border-radius: 4px;
   background: transparent;
-  color: var(--color-text-light-primary);
+  color: var(--color-light-2);
   cursor: pointer;
   transition: all 0.2s;
   font-size: 0.9em;
@@ -276,23 +280,23 @@
 }
 
 .image-action-button:hover {
-  background: var(--color-border-dark);
-  color: var(--color-text-light-highlight);
+  background: var(--color-cool-5);
+  color: var(--color-light-1);
 }
 
 .image-action-button.active {
   background: var(--color-level-success);
-  color: var(--color-text-light-primary);
+  color: var(--color-light-1);
 }
 
 .image-action-button.active:hover {
-  background: var(--color-level-success-dark, #228b22);
-  color: var(--color-text-light-primary);
+  background: var(--color-level-success-border);
+  color: var(--color-light-1);
 }
 
 .image-action-button.remove:hover {
   background: var(--color-level-error);
-  color: var(--color-text-light-primary);
+  color: var(--color-light-1);
 }
 
 /* Preview Thumbnail */
@@ -301,7 +305,7 @@
   height: 80px;
   object-fit: cover;
   border-radius: 4px;
-  border: 1px solid var(--color-border-dark);
+  border: 1px solid var(--color-dark-5);
 }
 
 /* Radio Groups */
@@ -315,9 +319,9 @@
   width: 36px;
   height: 28px;
   padding: 2px;
-  border: 1px solid #7a7971;
+  border: 1px solid var(--color-dark-5);
   border-radius: 3px;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--color-cool-5-50);
   cursor: pointer;
 }
 
@@ -333,20 +337,20 @@
   text-align: right;
   font-family: monospace;
   font-size: 0.9em;
-  color: #ccc;
+  color: var(--color-light-4);
 }
 
 /* Units Label */
 .units {
-  color: #999;
+  color: var(--color-light-5);
   font-size: 0.85em;
 }
 
 /* Scenes Directory Button */
 .tactical-map-button-row {
   padding: 0.5rem;
-  border-bottom: 1px solid var(--color-border-dark);
-  background: var(--color-bg-option);
+  border-bottom: 1px solid var(--color-dark-5);
+  background: var(--color-cool-5-25);
 }
 
 .tactical-map-bulk-config-button {
@@ -356,18 +360,18 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background: var(--color-border-dark);
+  background: var(--color-cool-5);
   border: none;
   border-radius: 4px;
-  color: var(--color-text-light-primary);
+  color: var(--color-light-2);
   cursor: pointer;
   transition: all 0.2s;
   font-weight: 500;
 }
 
 .tactical-map-bulk-config-button:hover {
-  background: var(--color-border-highlight);
-  color: var(--color-text-light-highlight);
+  background: var(--color-cool-3);
+  color: var(--color-light-1);
 }
 
 /* Responsive Adjustments */
@@ -392,7 +396,7 @@
 /* Focus Styles */
 .form-row input:focus,
 .form-row select:focus {
-  outline: 2px solid rgba(65, 105, 225, 0.6);
+  outline: 2px solid var(--color-cool-3);
   outline-offset: 1px;
 }
 
@@ -402,15 +406,15 @@
 }
 
 .tactical-map-bulk-config-content::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--color-scrollbar-track);
   border-radius: 4px;
 }
 
 .tactical-map-bulk-config-content::-webkit-scrollbar-thumb {
-  background: rgba(65, 105, 225, 0.5);
+  background: var(--color-scrollbar);
   border-radius: 4px;
 }
 
 .tactical-map-bulk-config-content::-webkit-scrollbar-thumb:hover {
-  background: rgba(65, 105, 225, 0.7);
+  background: var(--color-warm-2);
 }

@@ -109,16 +109,8 @@ export class TacticalMapBulkConfig extends foundry.applications.api.HandlebarsAp
       folderMap.set(folder.id, folderData);
     });
 
-    // Add "No Folder" category for unorganized scenes
-    const noFolder = {
-      id: "null",
-      name: "No Folder",
-      scenes: [],
-      expanded: this.expandedFolders.has("null")
-    };
-    folders.push(noFolder);
-
     // Organize scenes into their folders
+    const unfolderedScenes = [];
     game.scenes.forEach(scene => {
       const sceneData = this._prepareSceneData(scene);
 
@@ -127,16 +119,37 @@ export class TacticalMapBulkConfig extends foundry.applications.api.HandlebarsAp
         if (folder) {
           folder.scenes.push(sceneData);
         } else {
-          // Folder not found, add to "No Folder"
-          noFolder.scenes.push(sceneData);
+          // Folder not found, add to unfoldered list
+          unfolderedScenes.push(sceneData);
         }
       } else {
-        noFolder.scenes.push(sceneData);
+        unfolderedScenes.push(sceneData);
       }
     });
 
-    // Return only folders that have scenes
-    return folders.filter(f => f.scenes.length > 0);
+    // Remove empty folders
+    const foldersWithScenes = folders.filter(f => f.scenes.length > 0);
+
+    // Only add "No Folder" section if there are actual folders
+    // Otherwise, scenes are listed directly without a folder wrapper
+    if (foldersWithScenes.length > 0 && unfolderedScenes.length > 0) {
+      foldersWithScenes.push({
+        id: "null",
+        name: "No Folder",
+        scenes: unfolderedScenes,
+        expanded: this.expandedFolders.has("null")
+      });
+    } else if (foldersWithScenes.length === 0) {
+      // No folders at all, just list scenes
+      foldersWithScenes.push({
+        id: "root",
+        name: "Scenes",
+        scenes: unfolderedScenes,
+        expanded: true
+      });
+    }
+
+    return foldersWithScenes;
   }
 
   /**

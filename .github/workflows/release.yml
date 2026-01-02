@@ -1,0 +1,86 @@
+name: Release Module
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'module.json'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check if version changed
+        id: check_version
+        run: |
+          CURRENT_VERSION=$(jq -r '.version' module.json)
+          PREVIOUS_VERSION=$(git show HEAD~1:module.json | jq -r '.version')
+
+          echo "Current version: $CURRENT_VERSION"
+          echo "Previous version: $PREVIOUS_VERSION"
+
+          if [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "VERSION=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+            echo "Version changed from $PREVIOUS_VERSION to $CURRENT_VERSION"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "Version unchanged, skipping release"
+          fi
+
+      - name: Check if tag exists
+        if: steps.check_version.outputs.changed == 'true'
+        id: check_tag
+        run: |
+          if git rev-parse "v${{ steps.check_version.outputs.VERSION }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Tag v${{ steps.check_version.outputs.VERSION }} already exists, skipping release"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create module package
+        if: steps.check_version.outputs.changed == 'true' && steps.check_tag.outputs.exists == 'false'
+        run: |
+          mkdir -p tactical-map
+
+          # Copy necessary files and directories
+          cp module.json tactical-map/
+
+          # Copy directories
+          cp -r js tactical-map/
+          cp -r templates tactical-map/
+          cp -r styles tactical-map/
+
+          # Create zip file
+          cd tactical-map
+          zip -r ../tactical-map.zip .
+          cd ..
+
+      - name: Create Release
+        if: steps.check_version.outputs.changed == 'true' && steps.check_tag.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.check_version.outputs.VERSION }}
+          name: Release v${{ steps.check_version.outputs.VERSION }}
+          files: tactical-map.zip
+          body: |
+            ## Combat Tracker Extensions v${{ steps.check_version.outputs.VERSION }}
+
+            See [changelog.md](https://github.com/${{ github.repository }}/blob/main/changelog.md) for details.
+
+            ### Installation
+            1. Download `tactical-map.zip`
+            2. Extract to your Foundry VTT `Data/modules/` directory
+            3. Enable the module in your world's module settings
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
