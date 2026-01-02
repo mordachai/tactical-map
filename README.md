@@ -4,7 +4,6 @@
 
 It's a quality of life module, especially if you are running a _Theater of the Mind_ game, but want to solve combats more tactically.
 
-Check it out in action, click the image to open the video:
 
 <img width="1917" height="945" alt="image" src="https://github.com/user-attachments/assets/55b116aa-aa0d-41c1-8d3a-0dc57686cd15" />
 
@@ -13,7 +12,7 @@ Check it out in action, click the image to open the video:
 
 ## Features
 
-- Add a Tactical Map image to any scene via the Scene menu.
+- Add a Tactical Map image to any scene via the Scene menu. **NEW**
 - No tactical map image? Blur the background and start your combat right there!
 - Fast switch between the original scene and the tactical map, preserving zoom and position.
 - Use alternative token images for each type of map: top-down and isometric
