@@ -1,0 +1,408 @@
+/* bulk-config.css - Styles for Tactical Map Bulk Configuration Dialog */
+
+/* Main Dialog Container */
+.tactical-map-bulk-config {
+  font-family: var(--font-primary, "Signika", sans-serif);
+  font-size: 14px;
+}
+
+.tactical-map-bulk-config-content {
+  padding: 1rem;
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
+}
+
+/* Folder Sections */
+.folder-section {
+  margin-bottom: 1rem;
+  border: 1px solid #7a7971;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.folder-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  user-select: none;
+  border-radius: 4px 4px 0 0;
+  transition: background 0.2s;
+}
+
+.folder-header:hover {
+  background: rgba(65, 105, 225, 0.2);
+}
+
+.folder-header .folder-name {
+  flex: 1;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.folder-header .scene-count {
+  color: #999;
+  font-size: 0.9em;
+}
+
+.folder-header .toggle-icon {
+  color: #999;
+  font-size: 0.75rem;
+  transition: transform 0.2s;
+}
+
+.folder-header.expanded .toggle-icon {
+  transform: rotate(90deg);
+}
+
+/* Scenes Container */
+.scenes-container {
+  padding: 0.5rem;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scene Row */
+.scene-row {
+  margin-bottom: 0.5rem;
+  border: 1px solid #7a7971;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.scene-compact {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  position: relative;
+}
+
+.scene-compact:hover {
+  background: rgba(65, 105, 225, 0.15);
+}
+
+.scene-compact .expand-icon {
+  color: #999;
+  font-size: 0.75rem;
+  transition: transform 0.2s;
+  min-width: 12px;
+}
+
+.scene-row.expanded .expand-icon {
+  transform: rotate(90deg);
+}
+
+.scene-thumbnail {
+  width: 250px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #7a7971;
+  flex-shrink: 0;
+}
+
+.scene-name {
+  flex: 1;
+  font-weight: 500;
+  font-size: 1em;
+}
+
+.scene-meta {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.map-type-badge,
+.grid-type-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  background: rgba(65, 105, 225, 0.3);
+  color: #fff;
+  border: 1px solid rgba(65, 105, 225, 0.5);
+}
+
+.save-indicator {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #4caf50;
+  font-size: 1.2em;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.save-indicator.visible {
+  opacity: 1;
+}
+
+/* Scene Settings Expanded */
+.scene-settings {
+  padding: 1rem;
+  border-top: 1px solid #7a7971;
+  background: rgba(0, 0, 0, 0.1);
+  animation: slideDown 0.2s ease-out;
+}
+
+/* Form Rows - Ultra Compact Layout */
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.form-row label {
+  font-weight: 500;
+  font-size: 0.9em;
+  min-width: 50px;
+}
+
+.form-row label.checkbox-label,
+.form-row label.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: normal;
+  min-width: auto;
+}
+
+/* Input Fields */
+.form-row input[type="text"],
+.form-row input[type="number"],
+.form-row select {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #7a7971;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
+  font-size: 0.9em;
+}
+
+.image-path-input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.grid-size-input,
+.grid-dist-input,
+.grid-thickness-input {
+  width: 60px;
+}
+
+.grid-units-input {
+  width: 50px;
+}
+
+.grid-color-input {
+  width: 70px;
+}
+
+.grid-type-select,
+.grid-style-select {
+  min-width: 100px;
+}
+
+/* Buttons */
+.file-picker-button {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #7a7971;
+  border-radius: 3px;
+  background: rgba(65, 105, 225, 0.3);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 0.9em;
+  min-width: 36px;
+}
+
+.file-picker-button:hover {
+  background: rgba(65, 105, 225, 0.5);
+}
+
+/* Image Actions Column */
+.image-row {
+  align-items: flex-start !important;
+}
+
+.image-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-left: 0.5rem;
+}
+
+.image-action-button {
+  padding: 0.4rem;
+  border: 1px solid #7a7971;
+  border-radius: 3px;
+  background: rgba(65, 105, 225, 0.3);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  font-size: 1em;
+  min-width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-action-button:hover {
+  background: rgba(65, 105, 225, 0.5);
+}
+
+.image-action-button.active {
+  background: rgba(34, 139, 34, 0.5);
+  border-color: #4caf50;
+}
+
+.image-action-button.active:hover {
+  background: rgba(34, 139, 34, 0.7);
+}
+
+.image-action-button.remove {
+  background: rgba(220, 20, 60, 0.3);
+}
+
+.image-action-button.remove:hover {
+  background: rgba(220, 20, 60, 0.5);
+}
+
+/* Preview Thumbnail */
+.preview-thumbnail {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #7a7971;
+}
+
+/* Radio Groups */
+.radio-group {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Color Picker */
+.grid-color-picker {
+  width: 36px;
+  height: 28px;
+  padding: 2px;
+  border: 1px solid #7a7971;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+/* Range Sliders */
+.grid-alpha-slider,
+.blur-slider {
+  width: 150px;
+}
+
+.range-value {
+  display: inline-block;
+  min-width: 3rem;
+  text-align: right;
+  font-family: monospace;
+  font-size: 0.9em;
+  color: #ccc;
+}
+
+/* Units Label */
+.units {
+  color: #999;
+  font-size: 0.85em;
+}
+
+/* Scenes Directory Button */
+.tactical-map-button-row {
+  padding: 0.5rem;
+  border-bottom: 1px solid #7a7971;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.tactical-map-bulk-config-button {
+  width: 100%;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: rgba(65, 105, 225, 0.3);
+  border: 1px solid rgba(65, 105, 225, 0.5);
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-weight: 500;
+}
+
+.tactical-map-bulk-config-button:hover {
+  background: rgba(65, 105, 225, 0.5);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .image-path-input,
+  .grid-type-select,
+  .grid-style-select {
+    width: 100%;
+  }
+
+  .scene-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Focus Styles */
+.form-row input:focus,
+.form-row select:focus {
+  outline: 2px solid rgba(65, 105, 225, 0.6);
+  outline-offset: 1px;
+}
+
+/* Scrollbar Styling */
+.tactical-map-bulk-config-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tactical-map-bulk-config-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.tactical-map-bulk-config-content::-webkit-scrollbar-thumb {
+  background: rgba(65, 105, 225, 0.5);
+  border-radius: 4px;
+}
+
+.tactical-map-bulk-config-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(65, 105, 225, 0.7);
+}

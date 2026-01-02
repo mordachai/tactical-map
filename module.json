@@ -4,7 +4,7 @@
   "version": "2.4.0",
   "description": "Adds an optional Tactical Map Image for a Scene, toggled from the Tokens Control tools on the left toolbar. Now includes a global configuration option to use alternative token art when available. Tokens can automatically switch their appearance based on the selected Tactical Map type, supporting different views such as top-down and isometric.",
   "compatibility": {
-    "minimum": "12",
+    "minimum": "13",
     "verified": "13",
     "maximum": "13"
   },
@@ -15,7 +15,6 @@
     }
   ],
   "esmodules": [
-    "js/compatibility.js",
     "js/global-config.js",
     "js/logger-tcmap.js",
     "js/background-effects.js",
@@ -23,10 +22,12 @@
     "js/tactical-map.js",
     "js/token-art-switcher.js",
     "js/cache-manager.js",
-    "js/grid-conversion.js"
+    "js/grid-conversion.js",
+    "js/bulk-config-app.js"
   ],
   "styles": [
-    "styles/tactical-map.css"
+    "styles/tactical-map.css",
+    "styles/bulk-config.css"
   ],
   "url": "https://github.com/mordachai/tactical-map",
   "manifest": "https://raw.githubusercontent.com/mordachai/tactical-map/main/module.json",

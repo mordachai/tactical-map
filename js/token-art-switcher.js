@@ -1,7 +1,6 @@
 // token-art-switcher.js
 
 import { debugLog } from './logger-tcmap.js';
-import { getTokenTexture, updateTokenCompatible, browseFiles } from './compatibility.js';
 
 
 Hooks.once('ready', () => {
@@ -79,8 +78,8 @@ export async function switchTokenArt(scene, action) {
     // Process each token in the current batch
     for (let token of batchTokens) {
       try {
-        const texture = getTokenTexture(token);
-        
+        const texture = token.document.texture?.src;
+
         if (!texture) {
           debugLog(`Token '${token.name}' does not have a valid texture property.`);
           continue;
@@ -206,7 +205,7 @@ async function doesFileExist(filePath) {
     const filename = lastSlash >= 0 ? path.substring(lastSlash + 1) : path;
     
     // Browse the directory and check if the file exists
-    const browseResult = await browseFiles(source, directory);
+    const browseResult = await FilePicker.browse(source, directory);
     return browseResult.files.some(f => f.endsWith(filename));
   } catch (error) {
     console.error(`File existence check failed for ${filePath}:`, error);

@@ -1,6 +1,5 @@
 // background-effects.js
 import { debugLog } from './logger-tcmap.js';
-import { isV13OrLater } from './compatibility.js';
 
 function animateBlur(filter, startValue, endValue, duration = 500, callback = null) {
   const startTime = Date.now();

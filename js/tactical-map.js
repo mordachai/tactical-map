@@ -1,7 +1,6 @@
 // tactical-map.js
 import { switchTokenArt } from './token-art-switcher.js';
 import { debugLog } from './logger-tcmap.js';
-import { isV13OrLater } from './compatibility.js';
 import { toggleBackgroundBlur, forceApplyBlur, forceRemoveBlur } from './background-effects.js';
 
 function getScenePositionKey(scene, baseFlag) {

@@ -1,0 +1,242 @@
+<div class="tactical-map-bulk-config-content">
+
+  {{#each folders}}
+  <section class="folder-section" data-folder-id="{{id}}">
+
+    <!-- Folder Header -->
+    <header class="folder-header {{#if expanded}}expanded{{/if}}"
+            data-action="toggleFolder"
+            data-folder-id="{{id}}">
+      <i class="fa-solid {{#if expanded}}fa-folder-open{{else}}fa-folder{{/if}}"></i>
+      <span class="folder-name">{{name}}</span>
+      <span class="scene-count">({{scenes.length}})</span>
+      <i class="fa-solid fa-chevron-{{#if expanded}}down{{else}}right{{/if}} toggle-icon"></i>
+    </header>
+
+    <!-- Scenes in Folder -->
+    {{#if expanded}}
+    <div class="scenes-container">
+
+      {{#each scenes}}
+      <article class="scene-row {{#if expanded}}expanded{{/if}}"
+               data-scene-id="{{id}}">
+
+        <!-- Compact Row -->
+        <div class="scene-compact"
+             data-action="toggleScene"
+             data-scene-id="{{id}}">
+          <i class="fa-solid fa-chevron-{{#if expanded}}down{{else}}right{{/if}} expand-icon"></i>
+          <img src="{{thumbnail}}" alt="{{name}}" class="scene-thumbnail">
+          <span class="scene-name">{{name}}</span>
+          <span class="scene-meta">
+            <span class="map-type-badge">{{mapTypeLabel}}</span>
+            <span class="grid-type-badge">{{gridTypeLabel}}</span>
+          </span>
+          <span class="save-indicator">✓</span>
+        </div>
+
+        <!-- Expanded Settings -->
+        {{#if expanded}}
+        <div class="scene-settings">
+
+          <!-- Line 1: Image + File Picker + Preview with vertical action buttons -->
+          <div class="form-row image-row">
+            <label>Image:</label>
+            <input type="text"
+                   value="{{image}}"
+                   data-action="updateSetting"
+                   data-field="image"
+                   placeholder="path/to/tactical/map.jpg"
+                   class="image-path-input">
+            <button type="button"
+                    data-action="pickFile"
+                    title="Browse Files"
+                    class="file-picker-button">
+              <i class="fa-solid fa-folder-open"></i>
+            </button>
+            {{#if hasImage}}
+            <img src="{{image}}" alt="Preview" class="preview-thumbnail">
+            <div class="image-actions">
+              <button type="button"
+                      data-action="popoutImage"
+                      title="View Full Size"
+                      class="image-action-button">
+                <i class="fa-solid fa-up-right-from-square"></i>
+              </button>
+              <button type="button"
+                      data-action="toggleInScene"
+                      title="Toggle tactical map in current scene to preview grid"
+                      class="image-action-button {{#if isActive}}active{{/if}}">
+                <i class="fa-solid fa-map"></i>
+              </button>
+              <button type="button"
+                      data-action="removeImage"
+                      title="Remove tactical map image"
+                      class="image-action-button remove">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+            {{/if}}
+          </div>
+
+          <!-- Line 2: Map Type -->
+          <div class="form-row">
+            <label>Type:</label>
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio"
+                       name="mapType-{{id}}"
+                       value="top-down"
+                       {{#if (eq mapType "top-down")}}checked{{/if}}
+                       data-action="updateSetting"
+                       data-field="mapType">
+                Top-down
+              </label>
+              <label class="radio-label">
+                <input type="radio"
+                       name="mapType-{{id}}"
+                       value="isometric"
+                       {{#if (eq mapType "isometric")}}checked{{/if}}
+                       data-action="updateSetting"
+                       data-field="mapType">
+                Isometric
+              </label>
+              <label class="radio-label">
+                <input type="radio"
+                       name="mapType-{{id}}"
+                       value="hexcrawl"
+                       {{#if (eq mapType "hexcrawl")}}checked{{/if}}
+                       data-action="updateSetting"
+                       data-field="mapType">
+                Hexcrawl
+              </label>
+            </div>
+          </div>
+
+          <!-- Line 3: Checkboxes -->
+          <div class="form-row">
+            <label class="checkbox-label">
+              <input type="checkbox"
+                     {{#if isMainMapHexcrawl}}checked{{/if}}
+                     data-action="updateSetting"
+                     data-field="isMainMapHexcrawl">
+              Main Map Hexcrawl
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox"
+                     {{#if addTokensToEncounter}}checked{{/if}}
+                     data-action="updateSetting"
+                     data-field="addTokensToEncounter">
+              Auto-add to Encounter
+            </label>
+          </div>
+
+          <!-- Line 4: Grid Type + Size/Distance/Units (Size/Dist/Units only if image exists) -->
+          <div class="form-row">
+            <label>Grid:</label>
+            <select data-action="updateSetting" data-field="gridType" class="grid-type-select">
+              <option value="0" {{#if (eq gridType 0)}}selected{{/if}}>Gridless</option>
+              <option value="1" {{#if (eq gridType 1)}}selected{{/if}}>Square</option>
+              <option value="2" {{#if (eq gridType 2)}}selected{{/if}}>Hex Rows-Odd</option>
+              <option value="3" {{#if (eq gridType 3)}}selected{{/if}}>Hex Rows-Even</option>
+              <option value="4" {{#if (eq gridType 4)}}selected{{/if}}>Hex Cols-Odd</option>
+              <option value="5" {{#if (eq gridType 5)}}selected{{/if}}>Hex Cols-Even</option>
+            </select>
+
+            {{#if hasImage}}
+            <label>Size:</label>
+            <input type="number"
+                   value="{{gridSize}}"
+                   min="20"
+                   data-action="updateSetting"
+                   data-field="gridSize"
+                   class="grid-size-input">
+            <span class="units">px</span>
+
+            <label>Dist:</label>
+            <input type="number"
+                   value="{{gridScale.distance}}"
+                   data-action="updateSetting"
+                   data-field="gridScale.distance"
+                   step="any"
+                   class="grid-dist-input">
+
+            <label>Units:</label>
+            <input type="text"
+                   value="{{gridScale.units}}"
+                   data-action="updateSetting"
+                   data-field="gridScale.units"
+                   class="grid-units-input">
+            {{else}}
+            <label>Blur:</label>
+            <input type="range"
+                   value="{{blurAmount}}"
+                   min="0"
+                   max="30"
+                   data-action="updateSetting"
+                   data-field="blurAmount"
+                   class="blur-slider">
+            <span class="range-value">{{blurAmount}}</span>
+            {{/if}}
+          </div>
+
+          <!-- Line 5: Grid Style + Thickness/Color/Alpha (only if image exists) -->
+          {{#if hasImage}}
+          <div class="form-row">
+            <label>Style:</label>
+            <select data-action="updateSetting" data-field="gridStyle" class="grid-style-select">
+              <option value="solidLines" {{#if (eq gridStyle "solidLines")}}selected{{/if}}>Solid</option>
+              <option value="dashedLines" {{#if (eq gridStyle "dashedLines")}}selected{{/if}}>Dashed</option>
+              <option value="dottedLines" {{#if (eq gridStyle "dottedLines")}}selected{{/if}}>Dotted</option>
+              <option value="squarePoints" {{#if (eq gridStyle "squarePoints")}}selected{{/if}}>Square Points</option>
+              <option value="diamondPoints" {{#if (eq gridStyle "diamondPoints")}}selected{{/if}}>Diamond Points</option>
+              <option value="roundPoints" {{#if (eq gridStyle "roundPoints")}}selected{{/if}}>Round Points</option>
+            </select>
+
+            <label>Thick:</label>
+            <input type="number"
+                   value="{{gridThickness}}"
+                   data-action="updateSetting"
+                   data-field="gridThickness"
+                   step="any"
+                   class="grid-thickness-input">
+
+            <label>Color:</label>
+            <input type="text"
+                   value="{{gridColor}}"
+                   data-action="updateSetting"
+                   data-field="gridColor"
+                   class="grid-color-input"
+                   maxlength="7">
+            <input type="color"
+                   value="{{gridColor}}"
+                   data-action="updateSetting"
+                   data-field="gridColor"
+                   class="grid-color-picker">
+
+            <label>Alpha:</label>
+            <input type="range"
+                   value="{{gridAlpha}}"
+                   min="0"
+                   max="1"
+                   step="0.05"
+                   data-action="updateSetting"
+                   data-field="gridAlpha"
+                   class="grid-alpha-slider">
+            <span class="range-value">{{gridAlpha}}</span>
+          </div>
+          {{/if}}
+
+        </div>
+        {{/if}}
+
+      </article>
+      {{/each}}
+
+    </div>
+    {{/if}}
+
+  </section>
+  {{/each}}
+
+</div>
