@@ -1,7 +1,7 @@
 {
   "id": "tactical-map",
   "title": "Tactical Map",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Adds an optional Tactical Map Image for a Scene, toggled from the Tokens Control tools on the left toolbar. Now includes a global configuration option to use alternative token art when available. Tokens can automatically switch their appearance based on the selected Tactical Map type, supporting different views such as top-down and isometric.",
   "compatibility": {
     "minimum": "13",

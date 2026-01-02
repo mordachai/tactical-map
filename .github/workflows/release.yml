@@ -61,9 +61,9 @@ jobs:
           cp -r templates tactical-map/
           cp -r styles tactical-map/
 
-          # Create zip file
+          # Create zip file (named module.zip to match module.json)
           cd tactical-map
-          zip -r ../tactical-map.zip .
+          zip -r ../module.zip .
           cd ..
 
       - name: Create Release
@@ -72,14 +72,17 @@ jobs:
         with:
           tag_name: v${{ steps.check_version.outputs.VERSION }}
           name: Release v${{ steps.check_version.outputs.VERSION }}
-          files: tactical-map.zip
+          files: |
+            module.json
+            module.zip
           body: |
-            ## Combat Tracker Extensions v${{ steps.check_version.outputs.VERSION }}
+            ## Tactical Map v${{ steps.check_version.outputs.VERSION }}
 
-            See [changelog.md](https://github.com/${{ github.repository }}/blob/main/changelog.md) for details.
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
 
             ### Installation
-            1. Download `tactical-map.zip`
+            Install directly from Foundry VTT using the manifest URL, or:
+            1. Download `module.zip`
             2. Extract to your Foundry VTT `Data/modules/` directory
             3. Enable the module in your world's module settings
         env:
