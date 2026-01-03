@@ -4,13 +4,15 @@
 
 It's a quality of life module, especially if you are running a _Theater of the Mind_ game, but want to solve combats more tactically.
 
-Check it out in action, click the image to open the video:
 
-[![YouTube video](https://raw.githubusercontent.com/mordachai/tactical-map/dev/TacticalMapUpdate_snapshot.png 'Tactical Map Update')](https://youtu.be/uN3BWyXhWwU?si=1Ow4EEkvnG0Vhi63)
+<img width="1917" height="945" alt="image" src="https://github.com/user-attachments/assets/55b116aa-aa0d-41c1-8d3a-0dc57686cd15" />
+
+<img width="1911" height="933" alt="image" src="https://github.com/user-attachments/assets/7de3e12d-018c-4abb-be8d-b91bd4c4c453" />
+
 
 ## Features
 
-- Add a Tactical Map image to any scene via the Scene Configuration menu.
+- Add a Tactical Map image to any scene via the Scene menu. **NEW**
 - No tactical map image? Blur the background and start your combat right there!
 - Fast switch between the original scene and the tactical map, preserving zoom and position.
 - Use alternative token images for each type of map: top-down and isometric
@@ -22,14 +24,20 @@ Check it out in action, click the image to open the video:
 
 In Foundry VTT, go to the Add-on Modules tab and click Install Module. Then:
 
-- Search in the top bar for "mist hud" and click on the Install button of the module
+- Search in the top bar for "tactical map" and click on the Install button of the module
 OR
-- Paste the following manifest URL into the bottom Manifest URL field: ```https://raw.githubusercontent.com/mordachai/tactical-map/main/module.json```
+- Paste the following manifest URL into the bottom Manifest URL field: 
+```
+https://github.com/mordachai/tactical-map/releases/latest/download/module.json
+
+```
 
 After the installation enable the module in your Game Settings, under Manage Modules. 
 
 ## Scene Configuration
-![image](https://raw.githubusercontent.com/mordachai/tactical-map/main/TacticalMapUpdate_panel.png)
+
+<img width="1381" height="833" alt="image" src="https://github.com/user-attachments/assets/6330a6c2-c0f2-4bfc-86a1-762fbd9c5019" />
+
 
 ### Alternative token images
 
