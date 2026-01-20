@@ -661,6 +661,9 @@ async function ensureCombatEncounter(scene) {
 
 // Handle token creation when tactical map is active/inactive
 Hooks.on("createToken", async (scene, tokenData) => {
+  // Only GM should handle token position storage and art switching
+  if (!game.user.isGM) return;
+
   const isTacticalMapActive = scene.getFlag("tactical-map", "isActive");
 
   if (isTacticalMapActive) {
