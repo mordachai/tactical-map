@@ -60,21 +60,18 @@ Hooks.on("getSceneControlButtons", (controls) => {
   // Only show for GMs
   if (!game.user.isGM) return;
 
-  // In v13, controls is an object with control names as keys
+  // v14: controls is a Record<string, SceneControl>
   if (controls.tokens) {
-    // Ensure tools object exists
-    if (!controls.tokens.tools) {
-      controls.tokens.tools = {};
-    }
+    if (!controls.tokens.tools) controls.tokens.tools = {};
 
-    // Add tactical map toggle button to tokens control
     controls.tokens.tools.toggleTacticalMap = {
       name: "toggleTacticalMap",
+      order: 99,
       title: "Toggle Tactical Map",
       icon: "fas fa-map-marked-alt",
-      onChange: () => toggleTacticalMap(),
-      toggle: true,
-      visible: true
+      visible: true,
+      button: true,
+      onChange: () => toggleTacticalMap()
     };
 
     debugLog("Tactical Map toggle button added to scene controls");

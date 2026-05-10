@@ -1,6 +1,19 @@
 // background-effects.js
 import { debugLog } from './logger-tcmap.js';
 
+// v14: canvas.tiles / canvas.scene no longer exist as direct layer references.
+// canvas.primary.background is the scene background sprite in both v13 and v14.
+function getBlurTarget() {
+  if (canvas.primary?.background) return canvas.primary.background;
+  if (canvas.stage) return canvas.stage;
+  return null;
+}
+
+// v14: PIXI.filters.BlurFilterDeprecated is gone; PIXI v7 exposes PIXI.BlurFilter directly.
+function getBlurFilterClass() {
+  return PIXI.BlurFilter ?? PIXI.filters?.BlurFilter ?? PIXI.filters?.BlurFilterDeprecated ?? null;
+}
+
 function animateBlur(filter, startValue, endValue, duration = 500, callback = null) {
   const startTime = Date.now();
   const change = endValue - startValue;
@@ -42,17 +55,12 @@ export function updateBlurAmount(scene, newAmount) {
   if (!(isTacticalMapActive && !hasTacticalMap)) return;
   
   // Find target
-  let target = null;
-  if (canvas.primary?.background) target = canvas.primary.background;
-  else if (canvas.scene?.background) target = canvas.scene.background;
-  else if (canvas.tiles?.background) target = canvas.tiles.background;
-  else if (canvas.environment) target = canvas.environment;
-  else if (canvas.stage) target = canvas.stage;
+  const target = getBlurTarget();
   
   if (!target || !target.filters) return;
   
   // Update the blur amount if the filter exists
-  const BlurFilterClass = PIXI.filters.BlurFilterDeprecated || PIXI.filters.BlurFilter;
+  const BlurFilterClass = getBlurFilterClass();
   const blurFilter = target.filters.find(f => f instanceof BlurFilterClass);
   
   if (blurFilter) {
@@ -104,12 +112,7 @@ export async function toggleBackgroundBlur(scene) {
   debugLog(`Toggle blur: Current=${isBlurActive}, Should be=${shouldBlurBeActive}`);
   
   // Find appropriate target for blur effect
-  let target = null;
-  if (canvas.primary?.background) target = canvas.primary.background;
-  else if (canvas.scene?.background) target = canvas.scene.background;
-  else if (canvas.tiles?.background) target = canvas.tiles.background;
-  else if (canvas.environment) target = canvas.environment;
-  else if (canvas.stage) target = canvas.stage;
+  const target = getBlurTarget();
   
   if (!target) {
     console.error("Could not find a valid background layer");
@@ -127,7 +130,7 @@ export async function toggleBackgroundBlur(scene) {
   const blurAmount = scene.getFlag("tactical-map", "blurAmount") || 10;
   
   // Use modern filter with appropriate fallback
-  const BlurFilterClass = PIXI.filters.BlurFilterDeprecated || PIXI.filters.BlurFilter;
+  const BlurFilterClass = getBlurFilterClass();
   
   // If we need to activate blur
   if (shouldBlurBeActive && !isBlurActive) {
@@ -239,13 +242,7 @@ export async function forceApplyBlur(scene) {
   }
 
   try {
-    // Find appropriate target for blur effect
-    let target = null;
-    if (canvas.primary?.background) target = canvas.primary.background;
-    else if (canvas.scene?.background) target = canvas.scene.background;
-    else if (canvas.tiles?.background) target = canvas.tiles.background;
-    else if (canvas.environment) target = canvas.environment;
-    else if (canvas.stage) target = canvas.stage;
+    const target = getBlurTarget();
     
     if (!target) {
       console.error("Could not find a valid background layer for blur application");
@@ -256,7 +253,7 @@ export async function forceApplyBlur(scene) {
     const blurAmount = scene.getFlag("tactical-map", "blurAmount") || 10;
     
     // Use modern filter with appropriate fallback
-    const BlurFilterClass = PIXI.filters.BlurFilterDeprecated || PIXI.filters.BlurFilter;
+    const BlurFilterClass = getBlurFilterClass();
     
     // Create and configure blur filter
     const blurFilter = new BlurFilterClass();
@@ -318,13 +315,7 @@ export async function forceRemoveBlur(scene) {
   }
 
   try {
-    // Find appropriate target for blur effect
-    let target = null;
-    if (canvas.primary?.background) target = canvas.primary.background;
-    else if (canvas.scene?.background) target = canvas.scene.background;
-    else if (canvas.tiles?.background) target = canvas.tiles.background;
-    else if (canvas.environment) target = canvas.environment;
-    else if (canvas.stage) target = canvas.stage;
+    const target = getBlurTarget();
     
     if (!target || !target.filters) {
       console.log("No valid target or filters found for blur removal");
@@ -332,7 +323,7 @@ export async function forceRemoveBlur(scene) {
     }
 
     // Use modern filter with appropriate fallback
-    const BlurFilterClass = PIXI.filters.BlurFilterDeprecated || PIXI.filters.BlurFilter;
+    const BlurFilterClass = getBlurFilterClass();
     
     // Find the blur filter
     const blurFilter = target.filters.find(f => f instanceof BlurFilterClass);
@@ -425,13 +416,7 @@ async function forceApplyBlurLocally(scene) {
   if (!canvas || !canvas.ready) return false;
   
   try {
-    // Find appropriate target for blur effect
-    let target = null;
-    if (canvas.primary?.background) target = canvas.primary.background;
-    else if (canvas.scene?.background) target = canvas.scene.background;
-    else if (canvas.tiles?.background) target = canvas.tiles.background;
-    else if (canvas.environment) target = canvas.environment;
-    else if (canvas.stage) target = canvas.stage;
+    const target = getBlurTarget();
     
     if (!target) return false;
 
@@ -439,7 +424,7 @@ async function forceApplyBlurLocally(scene) {
     const blurAmount = scene.getFlag("tactical-map", "blurAmount") || 10;
     
     // Use modern filter with appropriate fallback
-    const BlurFilterClass = PIXI.filters.BlurFilterDeprecated || PIXI.filters.BlurFilter;
+    const BlurFilterClass = getBlurFilterClass();
     
     // Create and configure blur filter
     const blurFilter = new BlurFilterClass();
@@ -469,18 +454,12 @@ async function forceRemoveBlurLocally(scene) {
   if (!canvas || !canvas.ready) return false;
   
   try {
-    // Find appropriate target for blur effect
-    let target = null;
-    if (canvas.primary?.background) target = canvas.primary.background;
-    else if (canvas.scene?.background) target = canvas.scene.background;
-    else if (canvas.tiles?.background) target = canvas.tiles.background;
-    else if (canvas.environment) target = canvas.environment;
-    else if (canvas.stage) target = canvas.stage;
+    const target = getBlurTarget();
     
     if (!target || !target.filters) return false;
 
     // Use modern filter with appropriate fallback
-    const BlurFilterClass = PIXI.filters.BlurFilterDeprecated || PIXI.filters.BlurFilter;
+    const BlurFilterClass = getBlurFilterClass();
     
     // Find the blur filter
     const blurFilter = target.filters.find(f => f instanceof BlurFilterClass);

@@ -154,20 +154,15 @@ async function restoreTokenPositionsOptimized(scene, flag) {
   if (!tokenData) return;
 
   const currentMap = scene.getFlag("tactical-map", "isActive") ? "Tactical Map" : "Main Map";
-  
-  // Set up a bulk update
+
   const bulkUpdates = [];
-  
-  // Create update objects for each token
+
   for (let tokenId in tokenData) {
     const token = scene.tokens.get(tokenId);
     if (token) {
       let { x, y, rotation, scale, elevation, hidden } = tokenData[tokenId];
-
-      // Round to nearest pixel for precision
       x = Math.round(x);
       y = Math.round(y);
-      
       bulkUpdates.push({
         _id: tokenId,
         x, y, rotation,
@@ -177,34 +172,18 @@ async function restoreTokenPositionsOptimized(scene, flag) {
       });
     }
   }
-  
-  // Only perform update if we have tokens to update
+
   if (bulkUpdates.length > 0) {
-    // Temporarily pause canvas rendering for performance
-    canvas.freeze();
-    
     try {
       await scene.updateEmbeddedDocuments("Token", bulkUpdates, { animate: false });
       debugLog(`Bulk updated ${bulkUpdates.length} tokens on ${currentMap}`);
     } catch (error) {
       console.error("Error updating token positions:", error);
-    } finally {
-      // Resume canvas rendering
-      canvas.thaw();
     }
   }
 }
 
-// Helper function to minimize canvas refreshes during updates
+// Helper function for batched canvas operations
 async function batchCanvasOperations(callback) {
-  // Pause canvas refreshes
-  canvas.freeze();
-  
-  try {
-    // Execute the callback
-    await callback();
-  } finally {
-    // Resume canvas refreshes
-    canvas.thaw();
-  }
+  await callback();
 }
